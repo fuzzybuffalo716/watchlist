@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>The Watchlist</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d0d;color:#e8e0d0;font-family:Georgia,serif;max-width:640px;margin:0 auto;min-height:100vh}
+h1{font-size:22px;font-weight:normal;font-style:italic;color:#f5e6c8;letter-spacing:.06em}
+.header{padding:18px 16px 12px;background:#111;border-bottom:1px solid #1e1e1e;position:sticky;top:0;z-index:50}
+.header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.subtitle{color:#555;font-size:10px;margin-top:2px;letter-spacing:.1em}
+.btn-add{background:#c9a84c;color:#0d0d0d;border:none;border-radius:9px;padding:10px 16px;font-size:14px;font-family:Georgia,serif;font-style:italic;cursor:pointer;font-weight:bold}
+.tabs{display:flex;gap:8px;margin-bottom:10px}
+.tab{flex:1;padding:8px 4px;border:1px solid #222;border-radius:8px;background:#161616;color:#666;font-size:10px;cursor:pointer;font-family:Georgia,serif;letter-spacing:.08em;transition:all .2s;text-align:center}
+.tab.active{border-color:#c9a84c;background:rgba(201,168,76,.08);color:#c9a84c}
+.tab-count{font-size:20px;font-style:italic;color:#aaa;display:block;margin-bottom:1px}
+.tab.active .tab-count{color:#c9a84c}
+.search-row{display:flex;gap:8px}
+.search-input{flex:1;background:#1a1a1a;color:#ddd;border:1px solid #2a2a2a;border-radius:8px;padding:10px 12px;font-size:14px;font-family:Georgia,serif;outline:none}
+.btn-filter{padding:10px 14px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;color:#888;font-size:18px;cursor:pointer}
+.btn-filter.active{background:rgba(201,168,76,.13);border-color:#c9a84c;color:#c9a84c}
+.filter-panel{padding:14px 16px;background:#0f0f0f;border-bottom:1px solid #1a1a1a;display:none}
+.filter-label{font-size:9px;color:#555;letter-spacing:.14em;margin-bottom:7px}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.pill{padding:4px 10px;border:1px solid #2a2a2a;border-radius:20px;background:transparent;color:#666;font-size:10px;cursor:pointer;font-family:Georgia,serif;white-space:nowrap;transition:all .15s}
+.pill.active{border-color:#c9a84c;background:rgba(201,168,76,.13);color:#c9a84c}
+.pill.clear{border-color:#444;color:#888}
+.watched-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:11px;color:#888;margin-bottom:12px}
+.watched-toggle input{accent-color:#c9a84c;width:15px;height:15px}
+.count-bar{padding:7px 16px;color:#444;font-size:10px;letter-spacing:.12em;border-bottom:1px solid #181818}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 10px 80px}
+@media(min-width:480px){.grid{grid-template-columns:repeat(3,1fr)}}
+.card{border-radius:10px;overflow:hidden;cursor:pointer;border:1px solid #1e1e1e;background:#141414;transition:opacity .2s}
+.card:hover{border-color:#333}
+.card.watched{opacity:.5}
+.poster-wrap{position:relative;aspect-ratio:2/3;overflow:hidden;background:#1a1a1a}
+.poster-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.poster-wrap svg{width:100%;height:100%;display:block;position:absolute;top:0;left:0}
+.poster-img{position:relative;z-index:1}
+.badge{position:absolute;top:6px;left:6px;color:#fff;font-size:8px;letter-spacing:.12em;padding:2px 6px;border-radius:3px;z-index:2}
+.badge-family{background:#1b5e34}
+.badge-solo{background:#4a1878}
+.badge-seen{position:absolute;top:6px;right:6px;background:#c9a84c;color:#0d0d0d;font-size:8px;padding:2px 6px;border-radius:3px;z-index:2}
+.card-info{padding:8px 10px 10px}
+.card-title{font-size:13px;color:#f0e8d8;line-height:1.3;margin-bottom:2px}
+.card-year{font-size:10px;color:#555;margin-bottom:5px}
+.genre-pills{display:flex;flex-wrap:wrap;gap:3px}
+.genre-tag{font-size:9px;color:#777;border:1px solid #252525;padding:1px 5px;border-radius:3px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.73);z-index:150;display:none;align-items:flex-end}
+.overlay.open{display:flex}
+.modal-box{background:#141414;width:100%;max-width:560px;margin:0 auto;border-radius:18px 18px 0 0;max-height:90vh;overflow-y:auto;box-shadow:0 -16px 60px #000}
+.modal-hero{position:relative;height:230px;overflow:hidden;border-radius:18px 18px 0 0;background:#1a1a1a;flex-shrink:0}
+.modal-hero img{width:100%;height:100%;object-fit:cover;display:block}
+.modal-hero svg{width:100%;height:100%;display:block}
+.modal-grad{position:absolute;inset:0;background:linear-gradient(transparent 40%,#141414 100%)}
+.modal-close{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.67);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3}
+.modal-badges{position:absolute;top:14px;left:14px;display:flex;gap:6px;z-index:3}
+.modal-badge{color:#fff;font-size:9px;letter-spacing:.12em;padding:3px 8px;border-radius:4px}
+.modal-body{padding:16px 18px 36px}
+.modal-title{font-size:23px;color:#f5e6c8;font-style:italic;line-height:1.2;margin-bottom:4px}
+.modal-year{font-size:12px;color:#555;margin-bottom:12px}
+.modal-genres{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.modal-genre{font-size:10px;color:#888;border:1px solid #2a2a2a;padding:2px 8px;border-radius:4px}
+.modal-desc{font-size:13px;color:#888;line-height:1.7;margin-bottom:16px}
+.detail-section{border-top:1px solid #1e1e1e;padding-top:16px;margin-bottom:16px}
+.detail-row{display:flex;gap:12px;margin-bottom:11px;align-items:flex-start}
+.detail-label{font-size:9px;color:#555;letter-spacing:.13em;min-width:64px;padding-top:2px;flex-shrink:0}
+.detail-val{font-size:13px;color:#d0c8b8;line-height:1.55;flex:1}
+.why-box{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px 14px;margin-top:8px}
+.why-label{font-size:9px;color:#c9a84c;letter-spacing:.14em;margin-bottom:6px}
+.why-text{font-size:13px;color:#c0b8a8;line-height:1.65;font-style:italic}
+.btn-watched{width:100%;padding:13px;border-radius:9px;border:none;font-size:14px;cursor:pointer;font-family:Georgia,serif;font-style:italic}
+.btn-watched.unseen{background:#c9a84c;color:#0d0d0d}
+.btn-watched.seen{background:#242424;color:#777}
+.add-modal{background:#161616;width:100%;max-width:560px;margin:0 auto;border-radius:18px 18px 0 0;padding:20px 18px 36px;box-shadow:0 -12px 60px #000}
+.drag-handle{width:36px;height:4px;background:#333;border-radius:2px;margin:0 auto 18px}
+.add-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.add-title-text{font-size:20px;color:#f5e6c8;font-style:italic}
+.btn-close{background:none;border:none;color:#555;font-size:24px;cursor:pointer;padding:4px;line-height:1}
+.form-label{font-size:11px;color:#666;letter-spacing:.1em;display:block;margin-top:16px}
+.form-input{width:100%;background:#1e1e1e;color:#e8e0d0;border:1px solid #333;border-radius:8px;padding:11px 13px;font-size:15px;font-family:Georgia,serif;outline:none;margin-top:5px}
+.form-row{display:flex;gap:10px}
+.form-row>div{flex:1}
+.form-error{color:#e57373;font-size:12px;margin-top:8px}
+.btn-submit{margin-top:22px;width:100%;padding:14px;background:#c9a84c;color:#0d0d0d;border:none;border-radius:10px;font-size:16px;font-family:Georgia,serif;font-style:italic;cursor:pointer;font-weight:bold}
+.empty{text-align:center;color:#444;padding:60px 0;font-size:12px;letter-spacing:.12em}
+.spinner{width:24px;height:24px;border:2px solid #333;border-top:2px solid #c9a84c;border-radius:50%;animation:spin .8s linear infinite;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <div><h1>The Watchlist</h1><div class="subtitle" id="subtitle"></div></div>
+    <button class="btn-add" onclick="openAdd()">+ Add Film</button>
+  </div>
+  <div class="tabs">
+    <button class="tab active" id="tab-All" onclick="setList('All')"><span class="tab-count" id="count-All">0</span>ALL</button>
+    <button class="tab" id="tab-Family" onclick="setList('Family')"><span class="tab-count" id="count-Family">0</span>FAMILY</button>
+    <button class="tab" id="tab-Solo" onclick="setList('Solo')"><span class="tab-count" id="count-Solo">0</span>SOLO</button>
+  </div>
+  <div class="search-row">
+    <input class="search-input" placeholder="Search..." oninput="setSearch(this.value)">
+    <button class="btn-filter" id="filter-btn" onclick="toggleFilters()">&#9881;</button>
+  </div>
+</div>
+
+<div id="filter-panel" class="filter-panel">
+  <div class="filter-label">SORT</div>
+  <div class="pills" id="sort-pills"></div>
+  <label class="watched-toggle"><input type="checkbox" id="show-watched" checked onchange="render()"> SHOW ALREADY WATCHED</label>
+  <div class="filter-label">GENRE</div>
+  <div class="pills" id="genre-pills"></div>
+</div>
+
+<div class="count-bar" id="count-bar"></div>
+<div class="grid" id="grid"></div>
+<div class="empty" id="empty" style="display:none">NO FILMS MATCH</div>
+
+<!-- Detail modal -->
+
+<div class="overlay" id="detail-overlay" onclick="closeDetail()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-hero" id="modal-hero"></div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Add modal -->
+
+<div class="overlay" id="add-overlay" onclick="closeAdd()">
+  <div class="add-modal" onclick="event.stopPropagation()">
+    <div class="drag-handle"></div>
+    <div class="add-header">
+      <span class="add-title-text">Add a Film</span>
+      <button class="btn-close" onclick="closeAdd()">&#10005;</button>
+    </div>
+    <label class="form-label">TITLE *</label>
+    <input class="form-input" id="add-title" placeholder="Film title">
+    <div class="form-row">
+      <div><label class="form-label">YEAR</label><input class="form-input" id="add-year" placeholder="2024" type="number"></div>
+      <div><label class="form-label">LIST</label>
+        <select class="form-input" id="add-list"><option value="Family">Family</option><option value="Solo">Solo</option></select>
+      </div>
+    </div>
+    <label class="form-label">GENRES (comma separated)</label>
+    <input class="form-input" id="add-genres" placeholder="Drama, Comedy">
+    <label class="form-label">DESCRIPTION</label>
+    <input class="form-input" id="add-desc" placeholder="One-line summary">
+    <div class="form-error" id="add-error"></div>
+    <button class="btn-submit" onclick="submitAdd()">Add to Watchlist</button>
+  </div>
+</div>
+
+<script>
+const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyODAzZDBjMjU0MmM3OTJhZmZlYjQwNDZmODExOGM3YyIsIm5iZiI6MTc3NTYwNzk0Ny4wNTksInN1YiI6IjY5ZDVhMDhiYTg0NThlY2FlM2VkZjkyNiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.nPaW_tN4VyBm5ryaB7S9RjAvGg9f3JnZi859AbiYE84';
+const TMDB_BASE = 'https://api.themoviedb.org/3';
+const TMDB_IMG = 'https://image.tmdb.org/t/p/w300';
+const STORAGE_KEY = 'brian_watchlist_v8';
+const SEED = [{"id": 1, "list": "Family", "watched": true, "title": "Jurassic Park", "year": 1993, "tmdb_id": 329, "genre": ["Adventure", "Sci-Fi", "Thriller"], "emoji": "\ud83e\udd95", "color1": "#1a4a2e", "color2": "#2d7a4f", "runtime": "127 min", "director": "Steven Spielberg", "cast": "Sam Neill, Laura Dern, Jeff Goldblum, Richard Attenborough", "rating": "PG-13", "imdb": "8.2/10", "awards": "3 Academy Awards incl. Best Visual Effects", "desc": "A theme park's cloned dinosaurs run amok when a corporate spy sabotages its security systems.", "why": "The film that made an entire generation afraid to look at a glass of water \u2014 Spielberg's perfect blend of awe and terror still holds up completely."}, {"id": 2, "list": "Family", "watched": false, "title": "The Fugitive", "year": 1993, "tmdb_id": 9474, "genre": ["Action", "Thriller"], "emoji": "\ud83d\ude82", "color1": "#1a2a4a", "color2": "#2d4a7a", "runtime": "130 min", "director": "Andrew Davis", "cast": "Harrison Ford, Tommy Lee Jones, Sela Ward, Joe Pantoliano", "rating": "PG-13", "imdb": "7.8/10", "awards": "1 Academy Award \u2014 Tommy Lee Jones, Best Supporting Actor", "desc": "A wrongly convicted surgeon hunts his wife's real killer while pursued by a relentless U.S. Marshal.", "why": "One of the great chase thrillers \u2014 Tommy Lee Jones delivers one of cinema's most entertaining performances."}, {"id": 3, "list": "Family", "watched": false, "title": "The Rock", "year": 1996, "tmdb_id": 9802, "genre": ["Action", "Thriller"], "emoji": "\ud83d\udca5", "color1": "#4a1a1a", "color2": "#7a2d2d", "runtime": "136 min", "director": "Michael Bay", "cast": "Sean Connery, Nicolas Cage, Ed Harris, John Spencer", "rating": "R", "imdb": "7.4/10", "awards": "Nominated for Academy Award for Best Sound", "desc": "A biochemist and an ex-con must stop a rogue general from launching chemical weapons from Alcatraz.", "why": "Peak 90s action filmmaking \u2014 Connery and Cage are an absurdly fun pairing, and the Alcatraz setting is used brilliantly."}, {"id": 4, "list": "Family", "watched": false, "title": "The Shawshank Redemption", "year": 1994, "tmdb_id": 278, "genre": ["Drama"], "emoji": "\ud83d\udd11", "color1": "#2a2a1a", "color2": "#4a4a2d", "runtime": "142 min", "director": "Frank Darabont", "cast": "Tim Robbins, Morgan Freeman, Bob Gunton, William Sadler", "rating": "R", "imdb": "9.3/10", "awards": "7 Academy Award nominations incl. Best Picture", "desc": "A wrongly imprisoned banker forges a deep friendship and quietly engineers the ultimate escape.", "why": "Routinely ranked the greatest film ever made \u2014 a story about hope so quietly powerful it sneaks up and wrecks you."}, {"id": 5, "list": "Family", "watched": false, "title": "The Mandalorian and Grogu", "year": 2026, "tmdb_id": null, "genre": ["Sci-Fi", "Adventure"], "emoji": "\ud83e\ude96", "color1": "#1a3a4a", "color2": "#2d5a6a", "runtime": "TBD", "director": "Jon Favreau", "cast": "Pedro Pascal, Carl Weathers", "rating": "TBD", "imdb": "TBD", "awards": "Upcoming", "desc": "The beloved bounty hunter and his Force-sensitive foundling take their story to the big screen.", "why": "The most beloved Star Wars characters in years make the leap to theaters."}, {"id": 6, "list": "Family", "watched": false, "title": "Spider-Man: Brand New Day", "year": 2026, "tmdb_id": null, "genre": ["Action", "Superhero"], "emoji": "\ud83d\udd77", "color1": "#1a1a4a", "color2": "#2d2d7a", "runtime": "TBD", "director": "TBD", "cast": "TBD", "rating": "TBD", "imdb": "TBD", "awards": "Upcoming", "desc": "Peter Parker begins a fresh chapter as Spider-Man in a changed Marvel universe.", "why": "A fresh start for the web-slinger promises to reinvent the franchise for a new era."}, {"id": 7, "list": "Family", "watched": false, "title": "Avengers: Secret Wars", "year": 2027, "tmdb_id": null, "genre": ["Action", "Superhero"], "emoji": "\u26a1", "color1": "#2a1a4a", "color2": "#4a2d7a", "runtime": "TBD", "director": "TBD", "cast": "TBD", "rating": "TBD", "imdb": "TBD", "awards": "Upcoming", "desc": "Marvel's multiverse saga culminates as heroes from across realities unite against collapse.", "why": "The culmination of the entire Marvel Multiverse Saga."}, {"id": 8, "list": "Family", "watched": false, "title": "Supergirl: Woman of Tomorrow", "year": 2026, "tmdb_id": 912908, "genre": ["Action", "Superhero"], "emoji": "\ud83e\uddb8", "color1": "#1a2a4a", "color2": "#2d4a7a", "runtime": "TBD", "director": "Craig Gillespie", "cast": "Milly Alcock, Eva Green", "rating": "TBD", "imdb": "TBD", "awards": "Upcoming", "desc": "Kara Zor-El embarks on a cosmic odyssey, discovering her own legend at the frontier of the universe.", "why": "A grittier cosmic take on Supergirl with Milly Alcock already beloved as young Rhaenyra in House of the Dragon."}, {"id": 9, "list": "Family", "watched": false, "title": "Austin Powers", "year": 1997, "tmdb_id": 8681, "genre": ["Comedy"], "emoji": "\ud83d\ude0e", "color1": "#4a3a1a", "color2": "#7a5a2d", "runtime": "94 min", "director": "Jay Roach", "cast": "Mike Myers, Elizabeth Hurley, Michael York, Robert Wagner", "rating": "PG-13", "imdb": "7.0/10", "awards": "Blockbuster Entertainment Award for Favorite Comedy", "desc": "A swinging 60s spy is thawed out in the 90s to battle Dr. Evil in a groovy Bond spoof.", "why": "Endlessly quotable and gleefully stupid \u2014 Myers double performance as Austin and Dr. Evil is comedy gold."}, {"id": 10, "list": "Family", "watched": false, "title": "The Lord of the Rings", "year": 2001, "tmdb_id": 120, "genre": ["Fantasy", "Adventure"], "emoji": "\ud83d\udc8d", "color1": "#2a3a1a", "color2": "#3a5a2d", "runtime": "178-251 min", "director": "Peter Jackson", "cast": "Elijah Wood, Ian McKellen, Viggo Mortensen, Cate Blanchett", "rating": "PG-13", "imdb": "8.8-9.0/10", "awards": "17 Academy Awards across the trilogy", "desc": "A fellowship embarks on an epic quest to destroy the One Ring and save Middle-earth.", "why": "The defining fantasy epic of our time \u2014 Jackson's trilogy is filmmaking on a scale that may never be matched."}, {"id": 11, "list": "Family", "watched": false, "title": "Anchorman", "year": 2004, "tmdb_id": 9635, "genre": ["Comedy"], "emoji": "\ud83d\udcfa", "color1": "#4a2a1a", "color2": "#7a3a2d", "runtime": "94 min", "director": "Adam McKay", "cast": "Will Ferrell, Steve Carell, Paul Rudd, Christina Applegate", "rating": "PG-13", "imdb": "7.2/10", "awards": "MTV Movie Award for Best On-Screen Team", "desc": "A chauvinistic 1970s TV anchor's world is upended when a talented woman joins his team.", "why": "One of the most quotable comedies ever made \u2014 Ferrell and Carell together is an embarrassment of riches."}, {"id": 12, "list": "Family", "watched": false, "title": "O Brother Where Art Thou", "year": 2000, "tmdb_id": 16399, "genre": ["Comedy", "Adventure"], "emoji": "\ud83c\udfb8", "color1": "#3a3a1a", "color2": "#5a5a2d", "runtime": "107 min", "director": "Joel and Ethan Coen", "cast": "George Clooney, John Turturro, Tim Blake Nelson, Holly Hunter", "rating": "PG-13", "imdb": "7.9/10", "awards": "Academy Award for Best Cinematography nomination", "desc": "Three Depression-era convicts escape prison and blunder through misadventures based on The Odyssey.", "why": "The Coen Brothers at their most playful \u2014 an absurdist road movie with an extraordinary bluegrass soundtrack."}, {"id": 13, "list": "Family", "watched": false, "title": "Best in Show", "year": 2000, "tmdb_id": 10783, "genre": ["Comedy"], "emoji": "\ud83d\udc15", "color1": "#1a3a3a", "color2": "#2d5a5a", "runtime": "90 min", "director": "Christopher Guest", "cast": "Christopher Guest, Eugene Levy, Catherine O'Hara, Parker Posey", "rating": "PG-13", "imdb": "7.9/10", "awards": "Independent Spirit Award for Best Screenplay", "desc": "A mockumentary following hilariously neurotic owners competing at a prestigious dog show.", "why": "Christopher Guest's masterpiece \u2014 improvised genius from a perfect cast that makes competitive dog shows hilarious."}, {"id": 14, "list": "Family", "watched": false, "title": "Punch-Drunk Love", "year": 2002, "tmdb_id": 11045, "genre": ["Comedy", "Drama", "Romance"], "emoji": "\ud83c\udfb9", "color1": "#1a1a4a", "color2": "#2d2d6a", "runtime": "95 min", "director": "Paul Thomas Anderson", "cast": "Adam Sandler, Emily Watson, Philip Seymour Hoffman", "rating": "R", "imdb": "7.6/10", "awards": "Best Director, Cannes Film Festival", "desc": "A lonely volatile business owner finds unexpected love while being extorted by a phone-sex scam.", "why": "The film that revealed Adam Sandler is genuinely one of the great screen actors when given real material."}, {"id": 15, "list": "Family", "watched": false, "title": "Up", "year": 2009, "tmdb_id": 14160, "genre": ["Animation", "Adventure"], "emoji": "\ud83c\udf88", "color1": "#1a2a4a", "color2": "#2d4a7a", "runtime": "96 min", "director": "Pete Docter", "cast": "Ed Asner, Christopher Plummer, Jordan Nagai", "rating": "PG", "imdb": "8.3/10", "awards": "2 Academy Awards incl. Best Animated Feature", "desc": "A 78-year-old widower ties balloons to his house and flies to South America, stowing away a boy scout.", "why": "Contains arguably the most devastating 10-minute sequence in cinema history, then somehow becomes joyful."}, {"id": 16, "list": "Family", "watched": false, "title": "Moneyball", "year": 2011, "tmdb_id": 60308, "genre": ["Drama", "Sport"], "emoji": "\u26be", "color1": "#1a3a1a", "color2": "#2d5a2d", "runtime": "133 min", "director": "Bennett Miller", "cast": "Brad Pitt, Jonah Hill, Philip Seymour Hoffman, Robin Wright", "rating": "PG-13", "imdb": "7.6/10", "awards": "6 Academy Award nominations incl. Best Picture", "desc": "Oakland A's GM Billy Beane uses data analysis to build a winning team on a tiny budget.", "why": "A sports film really about the courage to think differently \u2014 Pitt and Hill are unexpectedly wonderful together."}, {"id": 17, "list": "Family", "watched": false, "title": "Amelie", "year": 2001, "tmdb_id": 194, "genre": ["Comedy", "Romance"], "emoji": "\ud83c\udf38", "color1": "#3a1a2a", "color2": "#6a2d4a", "runtime": "122 min", "director": "Jean-Pierre Jeunet", "cast": "Audrey Tautou, Mathieu Kassovitz, Rufus", "rating": "R", "imdb": "8.3/10", "awards": "5 Academy Award nominations incl. Best Foreign Language Film", "desc": "A whimsical Parisian waitress orchestrates the happiness of those around her while searching for love.", "why": "A pure cinematic delight \u2014 Jeunet's Paris is a fairy-tale world, and Tautou is completely enchanting."}, {"id": 18, "list": "Family", "watched": false, "title": "WALL-E", "year": 2008, "tmdb_id": 10681, "genre": ["Animation", "Sci-Fi"], "emoji": "\ud83e\udd16", "color1": "#3a2a1a", "color2": "#5a4a2d", "runtime": "98 min", "director": "Andrew Stanton", "cast": "Ben Burtt, Elissa Knight, Jeff Garlin, Sigourney Weaver", "rating": "G", "imdb": "8.4/10", "awards": "1 Academy Award \u2014 Best Animated Feature", "desc": "A lonely waste-collecting robot on an abandoned Earth falls in love and sparks humanity's return home.", "why": "Nearly wordless for its first act yet more emotionally resonant than almost any live-action film of its era."}, {"id": 19, "list": "Family", "watched": false, "title": "The Dark Knight", "year": 2008, "tmdb_id": 155, "genre": ["Action", "Drama", "Superhero"], "emoji": "\ud83e\udd87", "color1": "#1a1a1a", "color2": "#2d2d2d", "runtime": "152 min", "director": "Christopher Nolan", "cast": "Christian Bale, Heath Ledger, Aaron Eckhart, Michael Caine", "rating": "PG-13", "imdb": "9.0/10", "awards": "2 Academy Awards incl. Heath Ledger Best Supporting Actor", "desc": "Christopher Nolan's operatic Batman faces the anarchic Joker in a battle for Gotham's soul.", "why": "Heath Ledger's Joker is one of the greatest screen performances ever \u2014 this transcends superhero films entirely."}, {"id": 20, "list": "Family", "watched": false, "title": "Crouching Tiger Hidden Dragon", "year": 2000, "tmdb_id": 146, "genre": ["Action", "Drama", "Romance"], "emoji": "\u2694", "color1": "#1a3a2a", "color2": "#2d5a3a", "runtime": "120 min", "director": "Ang Lee", "cast": "Chow Yun-fat, Michelle Yeoh, Zhang Ziyi, Chang Chen", "rating": "PG-13", "imdb": "7.8/10", "awards": "4 Academy Awards incl. Best Foreign Language Film", "desc": "A stolen sword draws two women into an epic conflict of love duty and breathtaking martial arts.", "why": "Breathtaking wirework action married to a genuinely moving story about the cost of suppressing desire."}, {"id": 21, "list": "Family", "watched": false, "title": "Spirited Away", "year": 2001, "tmdb_id": 129, "genre": ["Animation", "Fantasy"], "emoji": "\ud83c\udfee", "color1": "#2a1a3a", "color2": "#4a2d5a", "runtime": "125 min", "director": "Hayao Miyazaki", "cast": "Daveigh Chase, Suzanne Pleshette, Miyu Irino", "rating": "PG", "imdb": "8.6/10", "awards": "1 Academy Award \u2014 Best Animated Feature", "desc": "A young girl trapped in a spirit world must work in a magical bathhouse to rescue her transformed parents.", "why": "Miyazaki's richest strangest world \u2014 an overwhelming imaginative feast that rewards every rewatch."}, {"id": 22, "list": "Solo", "watched": false, "title": "Interstellar", "year": 2014, "tmdb_id": 157336, "genre": ["Sci-Fi", "Drama"], "emoji": "\ud83c\udf0c", "color1": "#0a0a1a", "color2": "#1a1a3a", "runtime": "169 min", "director": "Christopher Nolan", "cast": "Matthew McConaughey, Anne Hathaway, Jessica Chastain, Michael Caine", "rating": "PG-13", "imdb": "8.7/10", "awards": "1 Academy Award \u2014 Best Visual Effects", "desc": "A NASA pilot leads a mission through a wormhole near Saturn to find humanity's next home as Earth dies.", "why": "Nolan's most emotionally ambitious film \u2014 the docking sequence and the bookshelf scene are cinema at its most overwhelming."}, {"id": 23, "list": "Solo", "watched": false, "title": "One Battle After Another", "year": 2025, "tmdb_id": null, "genre": ["War", "Drama"], "emoji": "\ud83e\ude96", "color1": "#2a2a1a", "color2": "#3a3a2d", "runtime": "TBD", "director": "TBD", "cast": "TBD", "rating": "TBD", "imdb": "TBD", "awards": "Upcoming", "desc": "A sweeping WWII epic adapted from the Pulitzer Prize-winning novel following soldiers across brutal theaters.", "why": "Based on the acclaimed novel \u2014 could be the definitive WWII film of the decade."}, {"id": 24, "list": "Solo", "watched": false, "title": "Sinners", "year": 2025, "tmdb_id": 1233227, "genre": ["Horror", "Drama"], "emoji": "\ud83c\udfb7", "color1": "#1a0a0a", "color2": "#3a1a1a", "runtime": "137 min", "director": "Ryan Coogler", "cast": "Michael B. Jordan, Hailee Steinfeld, Jack O'Connell, Wunmi Mosaku", "rating": "R", "imdb": "7.9/10", "awards": "2025 release", "desc": "Twin brothers return to the Jim Crow South and open a juke joint attracting something far more sinister.", "why": "Ryan Coogler crafts a genuinely original horror film with deep roots in blues mythology and American history."}, {"id": 25, "list": "Solo", "watched": false, "title": "The Life of Chuck", "year": 2025, "tmdb_id": 1196523, "genre": ["Drama", "Fantasy"], "emoji": "\ud83d\udd7a", "color1": "#1a2a3a", "color2": "#2d3a4a", "runtime": "110 min", "director": "Mike Flanagan", "cast": "Tom Hiddleston, Mark Hamill, Chiwetel Ejiofor, Karen Gillan", "rating": "PG-13", "imdb": "TBD", "awards": "2025 release", "desc": "Told in reverse a man's extraordinary inner life is revealed as the world quietly comes to an end.", "why": "Mike Flanagan adapting Stephen King in three reverse acts \u2014 a meditation on life joy and what we leave behind."}, {"id": 26, "list": "Solo", "watched": false, "title": "Vision Quest", "year": 1985, "tmdb_id": 18971, "genre": ["Drama", "Sport", "Romance"], "emoji": "\ud83e\udd3c", "color1": "#1a2a1a", "color2": "#2d3a2d", "runtime": "107 min", "director": "Harold Becker", "cast": "Matthew Modine, Linda Fiorentino, Michael Schoeffling, Ronny Cox", "rating": "R", "imdb": "7.0/10", "awards": "Golden Globe nomination for Best Original Song", "desc": "A driven high school wrestler obsessively targets the state's best competitor while falling for an older woman.", "why": "An underrated gem of 80s sports cinema \u2014 Modine is magnetic and Madonna's soundtrack appearance is iconic."}, {"id": 27, "list": "Solo", "watched": false, "title": "The Secret Life of Walter Mitty", "year": 2013, "tmdb_id": 116745, "genre": ["Adventure", "Comedy", "Drama"], "emoji": "\u2708", "color1": "#1a3a4a", "color2": "#2d4a5a", "runtime": "114 min", "director": "Ben Stiller", "cast": "Ben Stiller, Kristen Wiig, Shirley MacLaine, Sean Penn", "rating": "PG", "imdb": "7.3/10", "awards": "Golden Globe nomination for Best Original Score", "desc": "A daydreaming magazine employee embarks on a real global adventure to track down a missing photograph.", "why": "A visually gorgeous quietly moving ode to actually living your life \u2014 underseen and deeply rewatchable."}, {"id": 28, "list": "Solo", "watched": false, "title": "Superbad", "year": 2007, "tmdb_id": 8363, "genre": ["Comedy"], "emoji": "\ud83c\udf55", "color1": "#2a1a1a", "color2": "#4a2d2d", "runtime": "113 min", "director": "Greg Mottola", "cast": "Jonah Hill, Michael Cera, Christopher Mintz-Plasse, Seth Rogen", "rating": "R", "imdb": "7.6/10", "awards": "MTV Movie Award for Best Comedy", "desc": "Two best friends navigate chaos trying to score alcohol for a party on the last night of high school.", "why": "The funniest coming-of-age comedy of its era \u2014 underneath the raunchiness a genuinely touching film about friendship."}, {"id": 29, "list": "Solo", "watched": false, "title": "Memories of Murder", "year": 2003, "tmdb_id": 26354, "genre": ["Crime", "Drama", "Thriller"], "emoji": "\ud83d\udd26", "color1": "#1a1a2a", "color2": "#2d2d3a", "runtime": "132 min", "director": "Bong Joon-ho", "cast": "Song Kang-ho, Kim Sang-kyung, Kim Roi-ha, Park Hae-il", "rating": "Not Rated", "imdb": "8.1/10", "awards": "Grand Bell Awards \u2014 Best Film", "desc": "Based on South Korea's first serial murder case \u2014 detectives clash as the killer repeatedly eludes them.", "why": "Bong Joon-ho's breakthrough is a procedural masterpiece that ends on one of cinema's most haunting final shots."}, {"id": 30, "list": "Solo", "watched": false, "title": "Inside Llewyn Davis", "year": 2013, "tmdb_id": 152532, "genre": ["Drama", "Music"], "emoji": "\ud83c\udfb5", "color1": "#2a2a1a", "color2": "#3a3a2d", "runtime": "104 min", "director": "Joel and Ethan Coen", "cast": "Oscar Isaac, Carey Mulligan, John Goodman, Justin Timberlake", "rating": "R", "imdb": "7.5/10", "awards": "Grand Prix Cannes Film Festival", "desc": "A talented but self-destructive folk singer struggles through a brutal week in 1960s Greenwich Village.", "why": "Oscar Isaac's defining performance \u2014 a film about failure that's beautiful funny and quietly devastating."}, {"id": 31, "list": "Solo", "watched": false, "title": "The Act of Killing", "year": 2012, "tmdb_id": 152672, "genre": ["Documentary"], "emoji": "\ud83c\udfad", "color1": "#2a1a2a", "color2": "#3a2d3a", "runtime": "115 min", "director": "Joshua Oppenheimer", "cast": "Anwar Congo, Herman Koto", "rating": "Not Rated", "imdb": "8.2/10", "awards": "BAFTA for Best Documentary; Academy Award nomination", "desc": "Death squad leaders who carried out Indonesia's 1965 mass killings reenact their crimes on film.", "why": "One of the most disturbing and important documentaries ever made \u2014 a profound examination of evil and self-deception."}, {"id": 32, "list": "Solo", "watched": false, "title": "Spotlight", "year": 2015, "tmdb_id": 314365, "genre": ["Drama", "Thriller"], "emoji": "\ud83d\udcf0", "color1": "#1a2a2a", "color2": "#2d3a3a", "runtime": "129 min", "director": "Tom McCarthy", "cast": "Mark Ruffalo, Michael Keaton, Rachel McAdams, Liev Schreiber", "rating": "R", "imdb": "8.1/10", "awards": "2 Academy Awards incl. Best Picture", "desc": "The Boston Globe's investigative team exposes the Catholic Church's systematic cover-up of child abuse.", "why": "Methodical devastating essential \u2014 the best journalism film since All the President's Men."}, {"id": 33, "list": "Solo", "watched": false, "title": "Oppenheimer", "year": 2023, "tmdb_id": 872585, "genre": ["Drama", "History"], "emoji": "\ud83d\udca3", "color1": "#1a1a0a", "color2": "#2d2d1a", "runtime": "180 min", "director": "Christopher Nolan", "cast": "Cillian Murphy, Emily Blunt, Matt Damon, Robert Downey Jr.", "rating": "R", "imdb": "8.9/10", "awards": "7 Academy Awards incl. Best Picture Best Director Best Actor", "desc": "J. Robert Oppenheimer's race to build the atomic bomb and his subsequent political trial.", "why": "Nolan's magnum opus \u2014 three hours that feel like 90 minutes culminating in a moral reckoning that lingers for days."}, {"id": 34, "list": "Solo", "watched": false, "title": "Little Miss Sunshine", "year": 2006, "tmdb_id": 773, "genre": ["Comedy", "Drama"], "emoji": "\ud83d\udc51", "color1": "#3a2a1a", "color2": "#5a3a2d", "runtime": "101 min", "director": "Jonathan Dayton and Valerie Faris", "cast": "Steve Carell, Toni Collette, Greg Kinnear, Abigail Breslin", "rating": "R", "imdb": "7.8/10", "awards": "2 Academy Awards \u2014 Best Original Screenplay Best Supporting Actor", "desc": "A dysfunctional family piles into a VW bus to drive their daughter to a children's beauty pageant.", "why": "One of the warmest funniest ensemble comedies ever made \u2014 the ending is pure anarchic joy."}, {"id": 35, "list": "Solo", "watched": false, "title": "Memento", "year": 2000, "tmdb_id": 77, "genre": ["Mystery", "Thriller"], "emoji": "\ud83d\udcf8", "color1": "#1a1a2a", "color2": "#2a2a3a", "runtime": "113 min", "director": "Christopher Nolan", "cast": "Guy Pearce, Carrie-Anne Moss, Joe Pantoliano", "rating": "R", "imdb": "8.4/10", "awards": "2 Academy Award nominations \u2014 Best Screenplay Best Editing", "desc": "A man with no short-term memory hunts his wife's killer using Polaroids and tattoos \u2014 told in reverse.", "why": "The puzzle-box thriller that launched Nolan's career \u2014 still the cleverest use of reverse chronology in film."}, {"id": 36, "list": "Solo", "watched": false, "title": "Whiplash", "year": 2014, "tmdb_id": 244786, "genre": ["Drama", "Music"], "emoji": "\ud83e\udd41", "color1": "#2a1a1a", "color2": "#3a2d2d", "runtime": "107 min", "director": "Damien Chazelle", "cast": "Miles Teller, J.K. Simmons, Paul Reiser, Melissa Benoist", "rating": "R", "imdb": "8.5/10", "awards": "3 Academy Awards incl. Best Supporting Actor Simmons", "desc": "An obsessed jazz drumming student endures the brutal psychological warfare of a tyrannical conservatory instructor.", "why": "J.K. Simmons is terrifying Miles Teller is electrifying \u2014 the final sequence is one of the great cinematic climaxes."}, {"id": 37, "list": "Solo", "watched": false, "title": "Uncut Gems", "year": 2019, "tmdb_id": 473033, "genre": ["Crime", "Drama", "Thriller"], "emoji": "\ud83d\udc8e", "color1": "#1a2a1a", "color2": "#2d3a2d", "runtime": "135 min", "director": "Josh and Benny Safdie", "cast": "Adam Sandler, Julia Fox, Kevin Garnett, Idina Menzel", "rating": "R", "imdb": "7.4/10", "awards": "Independent Spirit Award for Best Male Lead Sandler", "desc": "A reckless New York jeweler juggles a rare gem massive gambling debts and NBA star Kevin Garnett.", "why": "The most anxiety-inducing film of the decade \u2014 Sandler gives the performance of his life in a film that never lets you breathe."}, {"id": 38, "list": "Solo", "watched": false, "title": "Borat", "year": 2006, "tmdb_id": 10220, "genre": ["Comedy"], "emoji": "\ud83c\udfac", "color1": "#3a3a1a", "color2": "#5a5a2d", "runtime": "84 min", "director": "Larry Charles", "cast": "Sacha Baron Cohen, Ken Davitian, Pamela Anderson", "rating": "R", "imdb": "7.3/10", "awards": "Golden Globe nomination for Best Actor Musical or Comedy", "desc": "A bumbling Kazakh TV reporter travels America making a documentary exposing prejudice through absurdist comedy.", "why": "Outrageously funny and more politically incisive than it appears \u2014 Cohen's commitment is total and fearless."}, {"id": 39, "list": "Solo", "watched": false, "title": "12 Years a Slave", "year": 2013, "tmdb_id": 76203, "genre": ["Drama", "History"], "emoji": "\u26d3", "color1": "#2a1a1a", "color2": "#3a2a2a", "runtime": "134 min", "director": "Steve McQueen", "cast": "Chiwetel Ejiofor, Michael Fassbender, Lupita Nyong'o, Brad Pitt", "rating": "R", "imdb": "8.1/10", "awards": "3 Academy Awards incl. Best Picture", "desc": "A free Black man from New York is kidnapped into slavery in the antebellum South \u2014 a harrowing true story.", "why": "Ejiofor and Nyong'o give shattering performances in McQueen's unflinching necessary masterwork."}, {"id": 40, "list": "Solo", "watched": false, "title": "A Serious Man", "year": 2009, "tmdb_id": 19750, "genre": ["Comedy", "Drama"], "emoji": "\ud83d\udcd0", "color1": "#2a2a2a", "color2": "#3a3a3a", "runtime": "106 min", "director": "Joel and Ethan Coen", "cast": "Michael Stuhlbarg, Richard Kind, Fred Melamed, Sari Lennick", "rating": "R", "imdb": "7.2/10", "awards": "2 Academy Award nominations incl. Best Picture", "desc": "A Midwestern Jewish physics professor watches his comfortable life unravel while searching for God's meaning.", "why": "The Coens most personal and philosophical film \u2014 darkly hilarious and genuinely profound about uncertainty."}, {"id": 41, "list": "Solo", "watched": false, "title": "Bridesmaids", "year": 2011, "tmdb_id": 40807, "genre": ["Comedy"], "emoji": "\ud83d\udc90", "color1": "#3a1a3a", "color2": "#5a2d5a", "runtime": "125 min", "director": "Paul Feig", "cast": "Kristen Wiig, Maya Rudolph, Rose Byrne, Melissa McCarthy", "rating": "R", "imdb": "6.8/10", "awards": "2 Academy Award nominations incl. Best Original Screenplay", "desc": "A down-on-her-luck maid of honor competes with a wealthy bridesmaid while barely keeping it together.", "why": "Genuinely hilarious and sneakily emotionally rich \u2014 Wiig's screenplay is far better than the raucous comedy suggests."}, {"id": 42, "list": "Solo", "watched": false, "title": "The Wolf of Wall Street", "year": 2013, "tmdb_id": 106646, "genre": ["Comedy", "Drama", "Crime"], "emoji": "\ud83d\udcb0", "color1": "#2a2a1a", "color2": "#4a4a2d", "runtime": "180 min", "director": "Martin Scorsese", "cast": "Leonardo DiCaprio, Jonah Hill, Margot Robbie, Matthew McConaughey", "rating": "R", "imdb": "8.2/10", "awards": "5 Academy Award nominations incl. Best Picture", "desc": "The stratospheric rise and spectacular collapse of stockbroker Jordan Belfort who built an empire on fraud.", "why": "Scorsese at his most wildly entertaining \u2014 DiCaprio is magnetic and the film's excess is entirely deliberate."}, {"id": 43, "list": "Solo", "watched": false, "title": "Get Out", "year": 2017, "tmdb_id": 419430, "genre": ["Horror", "Thriller"], "emoji": "\ud83d\udc41", "color1": "#0a1a0a", "color2": "#1a2d1a", "runtime": "104 min", "director": "Jordan Peele", "cast": "Daniel Kaluuya, Allison Williams, Bradley Whitford, Catherine Keener", "rating": "R", "imdb": "7.7/10", "awards": "1 Academy Award \u2014 Best Original Screenplay", "desc": "A Black man visits his girlfriend's family estate and discovers a terrifying secret beneath the liberal facade.", "why": "Jordan Peele's stunning debut \u2014 a horror film with such precise social commentary it works on multiple levels simultaneously."}, {"id": 44, "list": "Solo", "watched": false, "title": "Parasite", "year": 2019, "tmdb_id": 496243, "genre": ["Drama", "Thriller", "Comedy"], "emoji": "\ud83c\udfe0", "color1": "#1a1a1a", "color2": "#2d2d2d", "runtime": "132 min", "director": "Bong Joon-ho", "cast": "Song Kang-ho, Lee Sun-kyun, Cho Yeo-jeong, Choi Woo-shik", "rating": "R", "imdb": "8.5/10", "awards": "4 Academy Awards incl. Best Picture \u2014 first non-English film to win", "desc": "A destitute family schemes their way into a wealthy household until a shocking discovery changes everything.", "why": "A perfect film \u2014 genre-shifting hilarious devastating and politically furious all at once. See it without spoilers."}, {"id": 45, "list": "Solo", "watched": false, "title": "Sky King", "year": null, "tmdb_id": null, "genre": ["Drama"], "emoji": "\u2708", "color1": "#1a2a3a", "color2": "#2d3a4a", "runtime": "TBD", "director": "TBD", "cast": "TBD", "rating": "TBD", "imdb": "TBD", "awards": "TBD", "desc": "Recently added \u2014 details to be confirmed.", "why": "On the list \u2014 details TBD."}];
+
+// Poster cache: tmdb_id -> poster_path
+const posterCache = {};
+
+async function fetchPoster(tmdb_id) {
+  if (!tmdb_id) return null;
+  if (posterCache[tmdb_id] !== undefined) return posterCache[tmdb_id];
+  try {
+    const r = await fetch(`${TMDB_BASE}/movie/${tmdb_id}?language=en-US`, {
+      headers: { 'Authorization': `Bearer ${TMDB_TOKEN}`, 'accept': 'application/json' }
+    });
+    const d = await r.json();
+    posterCache[tmdb_id] = d.poster_path || null;
+    return d.poster_path || null;
+  } catch(e) {
+    posterCache[tmdb_id] = null;
+    return null;
+  }
+}
+
+function svgFallback(m) {
+  const t = m.title.length > 18 ? m.title.substring(0,16) + '...' : m.title;
+  return `<svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="g${m.id}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${m.color1}"/><stop offset="100%" stop-color="${m.color2}"/>
+    </linearGradient></defs>
+    <rect width="200" height="300" fill="url(#g${m.id})"/>
+    <rect x="12" y="12" width="176" height="276" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+    <text x="100" y="148" text-anchor="middle" font-size="58" dominant-baseline="middle">${m.emoji}</text>
+    <rect x="0" y="220" width="200" height="80" fill="rgba(0,0,0,.4)"/>
+    <text x="100" y="247" text-anchor="middle" font-size="12" font-family="Georgia,serif" font-style="italic" fill="#f5e6c8">${t}</text>
+    <text x="100" y="265" text-anchor="middle" font-size="10" font-family="Georgia,serif" fill="#c9a84c">${m.year || 'TBD'}</text>
+  </svg>`;
+}
+
+// Render a poster cell - shows spinner, then real image or fallback
+function makePosterCell(m, heightPx) {
+  const h = heightPx ? `height:${heightPx}px` : 'height:100%';
+  const imgStyle = `width:100%;${h};object-fit:cover;display:none;position:relative;z-index:1`;
+  const svgStyle = `width:100%;${h};display:block;position:absolute;top:0;left:0;z-index:0`;
+  return `
+    <div class="spinner" id="spin-${m.id}"></div>
+    <div id="svg-${m.id}" style="${svgStyle}">${svgFallback(m)}</div>
+    <img id="img-${m.id}" style="${imgStyle}" alt="${m.title}"
+      onload="this.style.display='block';var s=document.getElementById('spin-${m.id}');if(s)s.style.display='none';"
+      onerror="this.style.display='none';var s=document.getElementById('spin-${m.id}');if(s)s.style.display='none';">`;
+}
+
+// After rendering, kick off poster loads
+function loadPosters(ids) {
+  ids.forEach(async id => {
+    const m = movies.find(x => x.id === id);
+    if (!m || !m.tmdb_id) {
+      const s = document.getElementById('spin-' + id);
+      if (s) s.style.display = 'none';
+      return;
+    }
+    const path = await fetchPoster(m.tmdb_id);
+    const img = document.getElementById('img-' + id);
+    if (img && path) {
+      img.src = TMDB_IMG + path;
+    } else {
+      const s = document.getElementById('spin-' + id);
+      if (s) s.style.display = 'none';
+    }
+  });
+}
+
+function load() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) {
+      const saved = JSON.parse(s);
+      const seedIds = new Set(SEED.map(m => m.id));
+      const extras = saved.filter(m => !seedIds.has(m.id));
+      const merged = SEED.map(m => { const sv = saved.find(x => x.id === m.id); return sv ? Object.assign({}, m, {watched: sv.watched, list: sv.list}) : m; });
+      return merged.concat(extras);
+    }
+  } catch(e) {}
+  return SEED.slice();
+}
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(movies)); } catch(e) {} }
+
+let movies = load();
+let activeList = 'All', selGenres = [], sortBy = 'list', search = '';
+
+function getFiltered() {
+  let m = movies;
+  if (activeList !== 'All') m = m.filter(x => x.list === activeList);
+  const sw = document.getElementById('show-watched');
+  if (sw && !sw.checked) m = m.filter(x => !x.watched);
+  if (selGenres.length) m = m.filter(x => selGenres.every(g => x.genre.includes(g)));
+  if (search.trim()) { const s = search.toLowerCase(); m = m.filter(x => x.title.toLowerCase().includes(s) || x.desc.toLowerCase().includes(s)); }
+  const out = m.slice();
+  if (sortBy === 'title') out.sort((a,b) => a.title.localeCompare(b.title));
+  else if (sortBy === 'year') out.sort((a,b) => (a.year||9999)-(b.year||9999));
+  else if (sortBy === 'year-desc') out.sort((a,b) => (b.year||0)-(a.year||0));
+  else out.sort((a,b) => { if(a.list!==b.list) return a.list==='Family'?-1:1; return a.title.localeCompare(b.title); });
+  return out;
+}
+
+function render() {
+  const fam = movies.filter(m=>m.list==='Family').length;
+  const sol = movies.filter(m=>m.list==='Solo').length;
+  const seen = movies.filter(m=>m.watched).length;
+  document.getElementById('subtitle').textContent = seen + ' WATCHED - ' + (movies.length-seen) + ' TO GO';
+  document.getElementById('count-All').textContent = movies.length;
+  document.getElementById('count-Family').textContent = fam;
+  document.getElementById('count-Solo').textContent = sol;
+  ['All','Family','Solo'].forEach(l => {
+    document.getElementById('tab-'+l).className = 'tab' + (activeList===l?' active':'');
+  });
+  const sorts = [['list','Default'],['title','A-Z'],['year','Oldest'],['year-desc','Newest']];
+  document.getElementById('sort-pills').innerHTML = sorts.map(([v,l]) =>
+    `<button class="pill${sortBy===v?' active':''}" onclick="setSort('${v}')">${l}</button>`).join('');
+  const allGenres = [...new Set(movies.flatMap(m=>m.genre))].sort();
+  document.getElementById('genre-pills').innerHTML = allGenres.map(g =>
+    `<button class="pill${selGenres.includes(g)?' active':''}" onclick="toggleGenre('${g}')">${g}</button>`).join('') +
+    (selGenres.length ? `<button class="pill clear" onclick="clearGenres()">Clear</button>` : '');
+  const filtered = getFiltered();
+  document.getElementById('count-bar').textContent = filtered.length + ' FILM' + (filtered.length!==1?'S':'');
+  if (!filtered.length) {
+    document.getElementById('grid').innerHTML = '';
+    document.getElementById('empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('empty').style.display = 'none';
+  document.getElementById('grid').innerHTML = filtered.map(m => `
+    <div class="card${m.watched?' watched':''}" onclick="openDetail(${m.id})">
+      <div class="poster-wrap">${makePosterCell(m)}
+        <div class="badge badge-${m.list.toLowerCase()}">${m.list.toUpperCase()}</div>
+        ${m.watched?'<div class="badge-seen">SEEN</div>':''}
+      </div>
+      <div class="card-info">
+        <div class="card-title">${m.title}</div>
+        <div class="card-year">${m.year||'TBD'}</div>
+        <div class="genre-pills">${m.genre.slice(0,2).map(g=>`<span class="genre-tag">${g}</span>`).join('')}${m.genre.length>2?`<span class="genre-tag">+${m.genre.length-2}</span>`:''}</div>
+      </div>
+    </div>`).join('');
+  loadPosters(filtered.map(m=>m.id));
+}
+
+function setList(l) { activeList=l; render(); }
+function setSearch(v) { search=v; render(); }
+function setSort(v) { sortBy=v; render(); }
+function toggleGenre(g) { selGenres=selGenres.includes(g)?selGenres.filter(x=>x!==g):[...selGenres,g]; render(); }
+function clearGenres() { selGenres=[]; render(); }
+function toggleFilters() {
+  const p = document.getElementById('filter-panel');
+  const b = document.getElementById('filter-btn');
+  const show = p.style.display !== 'block';
+  p.style.display = show ? 'block' : 'none';
+  b.className = 'btn-filter' + (show?' active':'');
+}
+
+function openDetail(id) {
+  const m = movies.find(x => x.id===id);
+  const heroInner = makePosterCell(m, 230);
+  document.getElementById('modal-hero').innerHTML = heroInner +
+    `<div class="modal-grad"></div>
+     <button class="modal-close" onclick="closeDetail()">&#10005;</button>
+     <div class="modal-badges">
+       <span class="modal-badge" style="background:${m.list==='Family'?'#1b5e34':'#4a1878'}">${m.list.toUpperCase()}</span>
+       ${m.watched?'<span class="modal-badge" style="background:#c9a84c;color:#0d0d0d">SEEN</span>':''}
+     </div>`;
+  loadPosters([id]);
+  const rows = [['RUNTIME',m.runtime],['DIRECTOR',m.director],['CAST',m.cast],['RATING',m.rating],['IMDb',m.imdb],['AWARDS',m.awards]]
+    .filter(([,v])=>v&&v!=='TBD')
+    .map(([l,v])=>`<div class="detail-row"><div class="detail-label">${l}</div><div class="detail-val">${v}</div></div>`).join('');
+  document.getElementById('modal-body').innerHTML =
+    `<div class="modal-title">${m.title}</div>
+     <div class="modal-year">${m.year||'TBD'}</div>
+     <div class="modal-genres">${m.genre.map(g=>`<span class="modal-genre">${g}</span>`).join('')}</div>
+     <p class="modal-desc">${m.desc}</p>
+     <div class="detail-section">${rows}
+       ${m.why&&m.why!=='TBD'?`<div class="why-box"><div class="why-label">WHY WATCH</div><div class="why-text">${m.why}</div></div>`:''}
+     </div>
+     <button class="btn-watched ${m.watched?'seen':'unseen'}" onclick="toggleWatched(${m.id})">
+       ${m.watched?'Mark as Unwatched':'Mark as Watched'}
+     </button>`;
+  document.getElementById('detail-overlay').className = 'overlay open';
+}
+
+function closeDetail() { document.getElementById('detail-overlay').className = 'overlay'; }
+function toggleWatched(id) { movies=movies.map(m=>m.id===id?Object.assign({},m,{watched:!m.watched}):m); save(); closeDetail(); render(); }
+
+function openAdd() { document.getElementById('add-overlay').className='overlay open'; }
+function closeAdd() { document.getElementById('add-overlay').className='overlay'; document.getElementById('add-error').textContent=''; }
+function submitAdd() {
+  const title = document.getElementById('add-title').value.trim();
+  const year = document.getElementById('add-year').value;
+  const list = document.getElementById('add-list').value;
+  const genres = document.getElementById('add-genres').value.split(',').map(g=>g.trim()).filter(Boolean);
+  const desc = document.getElementById('add-desc').value.trim();
+  if (!title) { document.getElementById('add-error').textContent='Title is required.'; return; }
+  if (movies.some(m=>m.title.toLowerCase()===title.toLowerCase())) { document.getElementById('add-error').textContent='Already on a list!'; return; }
+  const colors = [['#1a2a3a','#2d3a4a'],['#2a1a3a','#3a2d4a'],['#1a3a1a','#2d4a2d'],['#3a1a1a','#4a2d2d']];
+  const color = colors[title.charCodeAt(0)%colors.length];
+  movies = movies.concat([{id:Date.now(),title,year:year?parseInt(year):null,list,genre:genres.length?genres:['Drama'],desc:desc||'No description yet.',watched:false,emoji:'🎬',color1:color[0],color2:color[1],tmdb_id:null,runtime:'TBD',director:'TBD',cast:'TBD',rating:'TBD',imdb:'TBD',awards:'TBD',why:'Recently added.'}]);
+  save(); closeAdd();
+  ['add-title','add-year','add-genres','add-desc'].forEach(id=>{document.getElementById(id).value='';});
+  render();
+}
+
+render();
+</script>
+
+</body>
+</html>
