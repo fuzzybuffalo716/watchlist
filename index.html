@@ -159,13 +159,16 @@ function init() {
 
 function save() { localStorage.setItem(SAVE_KEY, JSON.stringify(movies)); }
 
+const pc = {}; 
+
 async function fetchPoster(title, year) {
+    const cacheKey = `${title}|${year}`;
+    if (pc[cacheKey]) return pc[cacheKey];
+
     try {
         const q = encodeURIComponent(title);
-        // Coordinate lock: use the year to filter out documentaries or spin-offs
-        const yrParam = year ? `&primary_release_year=${year}` : '';
-        
-        const r = await fetch(`https://api.themoviedb.org/3/search/movie?query=${q}${yrParam}`, {
+        // Using 'year' is often more restrictive than 'primary_release_year' in the TMDB API
+        const r = await fetch(`https://api.themoviedb.org/3/search/movie?query=${q}&year=${year}`, {
             headers: { 
                 'Authorization': `Bearer ${TOKEN}`, 
                 'accept': 'application/json' 
@@ -173,14 +176,24 @@ async function fetchPoster(title, year) {
         });
         
         const d = await r.json();
-        // Return the first match that actually has a poster path
-        const match = (d.results || []).find(res => res.poster_path);
-        return match ? TIMG + match.poster_path : null;
-    } catch(e) { 
-        console.error("Poster fetch failed for:", title, e);
-        return null; 
+        const results = d.results || [];
+
+        // SEARCH LOGIC: 
+        // 1. Look for an exact, case-insensitive title match first.
+        // 2. Fall back to the most popular result if no exact match is found.
+        const match = results.find(res => res.title.toLowerCase() === title.toLowerCase() && res.poster_path) 
+                    || results.find(res => res.poster_path);
+
+        if (match) {
+            pc[cacheKey] = TIMG + match.poster_path;
+            return pc[cacheKey];
+        }
+    } catch(e) {
+        console.error("Poster fetch error for:", title, e);
     }
+    return null;
 }
+
 
 function svgPlaceholder(m) {
     return `<svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
