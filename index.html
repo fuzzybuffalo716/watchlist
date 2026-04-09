@@ -19,8 +19,6 @@
         .tab.on .tc{color:#c9a84c}
         .srow{display:flex;gap:8px}
         .si{flex:1;background:#1a1a1a;color:#ddd;border:1px solid #2a2a2a;border-radius:8px;padding:10px 12px;font-size:14px;font-family:Georgia,serif;outline:none}
-        .bf{padding:10px 14px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;color:#888;font-size:18px;cursor:pointer}
-        .bf.on{background:rgba(201,168,76,.13);border-color:#c9a84c;color:#c9a84c}
         .cb{padding:7px 16px;color:#444;font-size:10px;letter-spacing:.12em;border-bottom:1px solid #181818}
         .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 10px 80px}
         @media(min-width:480px){.grid{grid-template-columns:repeat(3,1fr)}}
@@ -44,7 +42,7 @@
         .mhero img{width:100%;height:100%;object-fit:cover;display:none;position:absolute;top:0;left:0;z-index:1}
         .mhero img.show{display:block}
         .mgrad{position:absolute;inset:0;background:linear-gradient(transparent 40%,#141414 100%);z-index:2}
-        .mclose{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.6);border:none;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;z-index:3}
+        .mclose{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.6);border:none;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;z-index:3;display:flex;align-items:center;justify-content:center}
         .mbody{padding:16px 18px 36px}
         .mtitle{font-size:23px;color:#f5e6c8;font-style:italic;margin-bottom:4px}
         .mdesc{font-size:13px;color:#888;line-height:1.7;margin-bottom:16px}
@@ -92,9 +90,10 @@
 <script>
 const TOKEN='eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyODAzZDBjMjU0MmM3OTJhZmZlYjQwNDZmODExOGM3YyIsIm5iZiI6MTc3NTYwNzk0Ny4wNTksInN1YiI6IjY5ZDVhMDhiYTg0NThlY2FlM2VkZjkyNiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.nPaW_tN4VyBm5ryaB7S9RjAvGg9f3JnZi859AbiYE84';
 const TIMG='https://image.tmdb.org/t/p/w300';
-const SAVE_KEY = 'watchlist_v3_clean';
 
-// Simple JSON Array Seed - No encoding errors possible here
+// Updated SAVE_KEY to force a full data refresh
+const SAVE_KEY = 'watchlist_v6_final_fix';
+
 const SEED_DATA = [
     {id: 1, list: "Family", watched: true, title: "Jurassic Park", year: 1993, genre: ["Adventure", "Sci-Fi"], c1: "#1a4a2e", c2: "#2d7a4f", desc: "A theme park cloned dinosaurs run amok."},
     {id: 2, list: "Family", watched: false, title: "The Fugitive", year: 1993, genre: ["Action", "Thriller"], c1: "#1a2a4a", c2: "#2d4a7a", desc: "A doctor hunts his wife's killer while pursued by a Marshal."},
@@ -113,7 +112,7 @@ const SEED_DATA = [
     {id: 15, list: "Family", watched: false, title: "Up", year: 2009, genre: ["Animation", "Adventure"], c1: "#1a2a4a", c2: "#2d4a7a", desc: "A widower flies his house to South America via balloons."},
     {id: 16, list: "Family", watched: false, title: "Moneyball", year: 2011, genre: ["Drama", "Sport"], c1: "#1a3a1a", c2: "#2d5a2d", desc: "Billy Beane uses data analysis to build a winning team."},
     {id: 17, list: "Family", watched: false, title: "Amelie", year: 2001, genre: ["Comedy", "Romance"], c1: "#3a1a2a", c2: "#6a2d4a", desc: "A whimsical Parisian waitress orchestrates happiness for others."},
-    {id: 18, list: "Family", watched: false, title: "WALL-E", year: 2008, genre: ["Animation", "Sci-Fi"], c1: "#3a2a1a", c2: "#5a4a2d", desc: "A waste-collecting robot sparks humanity's return home."},
+    {id: 18, list: "Family", watched: false, title: "WALL·E", year: 2008, genre: ["Animation", "Sci-Fi"], c1: "#3a2a1a", c2: "#5a4a2d", desc: "A waste-collecting robot sparks humanity's return home."},
     {id: 19, list: "Family", watched: false, title: "The Dark Knight", year: 2008, genre: ["Action", "Drama"], c1: "#1a1a1a", c2: "#2d2d2d", desc: "Batman faces the anarchic Joker in a battle for Gotham."},
     {id: 20, list: "Family", watched: false, title: "Crouching Tiger, Hidden Dragon", year: 2000, genre: ["Action", "Drama"], c1: "#1a3a2a", c2: "#2d5a3a", desc: "A stolen sword draws two women into an epic conflict."},
     {id: 21, list: "Family", watched: false, title: "Spirited Away", year: 2001, genre: ["Animation", "Fantasy"], c1: "#2a1a3a", c2: "#4a2d5a", desc: "A girl trapped in a spirit world must work in a bathhouse."},
@@ -144,6 +143,7 @@ const SEED_DATA = [
 ];
 
 let movies = [];
+const pc = {}; 
 
 function init() {
     const saved = localStorage.getItem(SAVE_KEY);
@@ -159,15 +159,12 @@ function init() {
 
 function save() { localStorage.setItem(SAVE_KEY, JSON.stringify(movies)); }
 
-const pc = {}; 
-
 async function fetchPoster(title, year) {
     const cacheKey = `${title}|${year}`;
     if (pc[cacheKey]) return pc[cacheKey];
 
     try {
         const q = encodeURIComponent(title);
-        // Using 'year' is often more restrictive than 'primary_release_year' in the TMDB API
         const r = await fetch(`https://api.themoviedb.org/3/search/movie?query=${q}&year=${year}`, {
             headers: { 
                 'Authorization': `Bearer ${TOKEN}`, 
@@ -178,22 +175,21 @@ async function fetchPoster(title, year) {
         const d = await r.json();
         const results = d.results || [];
 
-        // SEARCH LOGIC: 
-        // 1. Look for an exact, case-insensitive title match first.
-        // 2. Fall back to the most popular result if no exact match is found.
-        const match = results.find(res => res.title.toLowerCase() === title.toLowerCase() && res.poster_path) 
+        // STRONGER MATCHING LOGIC:
+        // Strip hyphens, dots, and spaces to find a match regardless of punctuation
+        const clean = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const target = clean(title);
+
+        const match = results.find(res => clean(res.title) === target && res.poster_path) 
                     || results.find(res => res.poster_path);
 
         if (match) {
             pc[cacheKey] = TIMG + match.poster_path;
             return pc[cacheKey];
         }
-    } catch(e) {
-        console.error("Poster fetch error for:", title, e);
-    }
+    } catch(e) { console.error("Poster fetch error for:", title, e); }
     return null;
 }
-
 
 function svgPlaceholder(m) {
     return `<svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
@@ -222,7 +218,7 @@ function render() {
             </div>
             <div class="ci">
                 <div class="ct">${m.title}</div>
-                <div class="cy">${m.year}</div>
+                <div class="cy">${m.year || 'TBD'}</div>
             </div>
         </div>
     `).join('');
@@ -240,7 +236,7 @@ function setSearch(v) { srch = v; render(); }
 function openDet(id) {
     const m = movies.find(x => x.id === id);
     document.getElementById('mhero').innerHTML = `<div class="mgrad"></div><button class="mclose" onclick="closeDet()">✕</button><img id="mh${m.id}" style="width:100%; height:100%; object-fit:cover; display:block">`;
-    document.getElementById('mbody').innerHTML = `<h2 class="mtitle">${m.title} (${m.year})</h2><p class="mdesc">${m.desc}</p>
+    document.getElementById('mbody').innerHTML = `<h2 class="mtitle">${m.title} (${m.year || 'TBD'})</h2><p class="mdesc">${m.desc}</p>
         <button class="btnw ${m.watched ? 'seen' : 'unseen'}" onclick="togW(${m.id})">${m.watched ? 'Mark Unwatched' : 'Mark Watched'}</button>`;
     
     fetchPoster(m.title, m.year).then(url => { if(url) document.getElementById(`mh${m.id}`).src = url; });
