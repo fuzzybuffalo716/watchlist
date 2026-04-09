@@ -162,12 +162,24 @@ function save() { localStorage.setItem(SAVE_KEY, JSON.stringify(movies)); }
 async function fetchPoster(title, year) {
     try {
         const q = encodeURIComponent(title);
-        const r = await fetch(`https://api.themoviedb.org/3/search/movie?query=${q}&api_key=2803d0c2542m792affeeb4046f8118c7c`, { // Simplified key usage
-            headers: { 'Authorization': `Bearer ${TOKEN}`, 'accept': 'application/json' }
+        // Coordinate lock: use the year to filter out documentaries or spin-offs
+        const yrParam = year ? `&primary_release_year=${year}` : '';
+        
+        const r = await fetch(`https://api.themoviedb.org/3/search/movie?query=${q}${yrParam}`, {
+            headers: { 
+                'Authorization': `Bearer ${TOKEN}`, 
+                'accept': 'application/json' 
+            }
         });
+        
         const d = await r.json();
-        return d.results?.[0]?.poster_path ? TIMG + d.results[0].poster_path : null;
-    } catch(e) { return null; }
+        // Return the first match that actually has a poster path
+        const match = (d.results || []).find(res => res.poster_path);
+        return match ? TIMG + match.poster_path : null;
+    } catch(e) { 
+        console.error("Poster fetch failed for:", title, e);
+        return null; 
+    }
 }
 
 function svgPlaceholder(m) {
