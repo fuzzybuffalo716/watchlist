@@ -258,9 +258,9 @@ document.getElementById(‘cFamily’).textContent=fam;
 document.getElementById(‘cSolo’).textContent=sol;
 [‘All’,‘Family’,‘Solo’].forEach(function(l){document.getElementById(‘t’+l).className=‘tab’+(aList===l?’ on’:’’);});
 var sorts=[[‘list’,‘Default’],[‘title’,‘A-Z’],[‘year’,‘Oldest’],[‘year-desc’,‘Newest’]];
-document.getElementById(‘spills’).innerHTML=sorts.map(function(sv){return’<button class="pill'+(sb===sv[0]?' on':'')+'" onclick="setSort(''+sv[0]+'')">’+sv[1]+’</button>’;}).join(’’);
+var _sh=’’;sorts.forEach(function(sv){_sh+=’<button class="pill'+(sb===sv[0]?' on':'')+'" data-v="'+sv[0]+'">’+sv[1]+’</button>’;});document.getElementById(‘spills’).innerHTML=_sh;document.getElementById(‘spills’).onclick=function(e){var v=e.target.getAttribute(‘data-v’);if(v)setSort(v);};
 var ag=[];movies.forEach(function(m){m.genre.forEach(function(g){if(ag.indexOf(g)<0)ag.push(g);});});ag.sort();
-document.getElementById(‘gpills’).innerHTML=ag.map(function(g){return’<button class="pill'+(sg.indexOf(g)>=0?' on':'')+'" onclick="togG(''+g+'')">’+g+’</button>’;}).join(’’)+(sg.length?’<button class="pill clr" onclick="clrG()">Clear</button>’:’’);
+var _gh=’’;ag.forEach(function(g){_gh+=’<button class="pill'+(sg.indexOf(g)>=0?' on':'')+'" data-g="'+g+'">’+g+’</button>’;});if(sg.length)_gh+=’<button class="pill clr" id="clrBtn">Clear</button>’;document.getElementById(‘gpills’).innerHTML=_gh;document.getElementById(‘gpills’).onclick=function(e){if(e.target.id===‘clrBtn’)clrG();else{var g=e.target.getAttribute(‘data-g’);if(g)togG(g);}};
 var filt=getFilt();
 document.getElementById(‘cb’).textContent=filt.length+’ FILM’+(filt.length!==1?‘S’:’’);
 if(!filt.length){document.getElementById(‘grid’).innerHTML=’’;document.getElementById(‘empty’).style.display=‘block’;return;}
