@@ -234,6 +234,31 @@ return ‘<div class="card'+(m.watched?' dim':'')+'" onclick="openDet('+m.id+')"
 var aList=‘All’,sg=[],sb=‘list’,srch=’’;
 
 function getFilt(){
+var movies=SEED.slice();
+try{
+  var saved=localStorage.getItem(SAVE_KEY);
+  if(saved){
+    var parsed=JSON.parse(saved);
+    if(Array.isArray(parsed)&&parsed.length>=SEED.length){
+      var seedIds={};
+      SEED.forEach(function(m){seedIds[m.id]=true;});
+      var savedMap={};
+      parsed.forEach(function(m){savedMap[m.id]=m;});
+      movies=SEED.map(function(m){
+        var s=savedMap[m.id];
+        return s?Object.assign({},m,{watched:s.watched,list:s.list}):m;
+      });
+      parsed.forEach(function(m){if(!seedIds[m.id])movies.push(m);});
+    }
+  }
+}catch(e){}
+
+var pc={};
+function saveState(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(movies));}catch(e){}}
+
+var aList='All',sg=[],sb='list',srch='';
+
+function getFilt(){
 var m=movies;
 if(aList!==‘All’)m=m.filter(function(x){return x.list===aList;});
 var sw=document.getElementById(‘sw’);
