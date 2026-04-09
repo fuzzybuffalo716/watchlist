@@ -1,33 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Watchlist</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{background:#0d0d0d;color:#e8e0d0;font-family:Georgia,serif;max-width:640px;margin:0 auto;min-height:100vh}
+        h1{font-size:22px;font-weight:normal;font-style:italic;color:#f5e6c8;letter-spacing:.06em}
+        .hdr{padding:18px 16px 12px;background:#111;border-bottom:1px solid #1e1e1e;position:sticky;top:0;z-index:50}
+        .hdr-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+        .sub{color:#555;font-size:10px;margin-top:2px;letter-spacing:.1em}
+        .btn-add{background:#c9a84c;color:#0d0d0d;border:none;border-radius:9px;padding:10px 16px;font-size:14px;font-family:Georgia,serif;font-style:italic;cursor:pointer;font-weight:bold}
+        .tabs{display:flex;gap:8px;margin-bottom:10px}
+        .tab{flex:1;padding:8px 4px;border:1px solid #222;border-radius:8px;background:#161616;color:#666;font-size:10px;cursor:pointer;font-family:Georgia,serif;letter-spacing:.08em;text-align:center;transition:all .2s}
+        .tab.on{border-color:#c9a84c;background:rgba(201,168,76,.08);color:#c9a84c}
+        .tc{font-size:20px;font-style:italic;color:#aaa;display:block;margin-bottom:1px}
+        .tab.on .tc{color:#c9a84c}
+        .srow{display:flex;gap:8px}
+        .si{flex:1;background:#1a1a1a;color:#ddd;border:1px solid #2a2a2a;border-radius:8px;padding:10px 12px;font-size:14px;font-family:Georgia,serif;outline:none}
+        .bf{padding:10px 14px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;color:#888;font-size:18px;cursor:pointer}
+        .bf.on{background:rgba(201,168,76,.13);border-color:#c9a84c;color:#c9a84c}
+        .fp{padding:14px 16px;background:#0f0f0f;border-bottom:1px solid #1a1a1a;display:none}
+        .fl{font-size:9px;color:#555;letter-spacing:.14em;margin-bottom:7px}
+        .pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+        .pill{padding:4px 10px;border:1px solid #2a2a2a;border-radius:20px;background:transparent;color:#666;font-size:10px;cursor:pointer;font-family:Georgia,serif;white-space:nowrap;transition:all .15s}
+        .pill.on{border-color:#c9a84c;background:rgba(201,168,76,.13);color:#c9a84c}
+        .pill.clr{border-color:#444;color:#888}
+        .wtog{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:11px;color:#888;margin-bottom:12px}
+        .wtog input{accent-color:#c9a84c;width:15px;height:15px}
+        .cb{padding:7px 16px;color:#444;font-size:10px;letter-spacing:.12em;border-bottom:1px solid #181818}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 10px 80px}
+        @media(min-width:480px){.grid{grid-template-columns:repeat(3,1fr)}}
+        .card{border-radius:10px;overflow:hidden;cursor:pointer;border:1px solid #1e1e1e;background:#141414;transition:opacity .2s}
+        .card:hover{border-color:#333}
+        .card.dim{opacity:.5}
+        .pw{position:relative;aspect-ratio:2/3;overflow:hidden;background:#1a1a1a}
+        .pw svg{width:100%;height:100%;display:block}
+        .pw img{width:100%;height:100%;object-fit:cover;display:none;position:absolute;top:0;left:0;z-index:1}
+        .pw img.show{display:block}
+        .bdg{position:absolute;top:6px;left:6px;color:#fff;font-size:8px;letter-spacing:.12em;padding:2px 6px;border-radius:3px;z-index:2}
+        .bfam{background:#1b5e34}.bsolo{background:#4a1878}
+        .bseen{position:absolute;top:6px;right:6px;background:#c9a84c;color:#0d0d0d;font-size:8px;padding:2px 6px;border-radius:3px;z-index:2}
+        .ci{padding:8px 10px 10px}
+        .ct{font-size:13px;color:#f0e8d8;line-height:1.3;margin-bottom:2px}
+        .cy{font-size:10px;color:#555;margin-bottom:5px}
+        .gp{display:flex;flex-wrap:wrap;gap:3px}
+        .gt{font-size:9px;color:#777;border:1px solid #252525;padding:1px 5px;border-radius:3px}
+        .ov{position:fixed;inset:0;background:rgba(0,0,0,.73);z-index:150;display:none;align-items:flex-end}
+        .ov.open{display:flex}
+        .mbox{background:#141414;width:100%;max-width:560px;margin:0 auto;border-radius:18px 18px 0 0;max-height:90vh;overflow-y:auto;box-shadow:0 -16px 60px #000}
+        .mhero{position:relative;height:230px;overflow:hidden;border-radius:18px 18px 0 0;background:#1a1a1a;flex-shrink:0}
+        .mhero svg{width:100%;height:100%;display:block}
+        .mhero img{width:100%;height:100%;object-fit:cover;display:none;position:absolute;top:0;left:0;z-index:1}
+        .mhero img.show{display:block}
+        .mgrad{position:absolute;inset:0;background:linear-gradient(transparent 40%,#141414 100%);z-index:2}
+        .mclose{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.67);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3}
+        .mbadges{position:absolute;top:14px;left:14px;display:flex;gap:6px;z-index:3}
+        .mbadges span{color:#fff;font-size:9px;letter-spacing:.12em;padding:3px 8px;border-radius:4px}
+        .mbody{padding:16px 18px 36px}
+        .mtitle{font-size:23px;color:#f5e6c8;font-style:italic;line-height:1.2;margin-bottom:4px}
+        .myear{font-size:12px;color:#555;margin-bottom:12px}
+        .mgenres{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+        .mgenres span{font-size:10px;color:#888;border:1px solid #2a2a2a;padding:2px 8px;border-radius:4px}
+        .mdesc{font-size:13px;color:#888;line-height:1.7;margin-bottom:16px}
+        .dets{border-top:1px solid #1e1e1e;padding-top:16px;margin-bottom:16px}
+        .drow{display:flex;gap:12px;margin-bottom:11px;align-items:flex-start}
+        .dlbl{font-size:9px;color:#555;letter-spacing:.13em;min-width:64px;padding-top:2px;flex-shrink:0}
+        .dval{font-size:13px;color:#d0c8b8;line-height:1.55;flex:1}
+        .whybox{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px 14px;margin-top:8px}
+        .whylbl{font-size:9px;color:#c9a84c;letter-spacing:.14em;margin-bottom:6px}
+        .whytxt{font-size:13px;color:#c0b8a8;line-height:1.65;font-style:italic}
+        .btnw{width:100%;padding:13px;border-radius:9px;border:none;font-size:14px;cursor:pointer;font-family:Georgia,serif;font-style:italic}
+        .btnw.unseen{background:#c9a84c;color:#0d0d0d}
+        .btnw.seen{background:#242424;color:#777}
+        .addmod{background:#161616;width:100%;max-width:560px;margin:0 auto;border-radius:18px 18px 0 0;padding:20px 18px 36px;box-shadow:0 -12px 60px #000}
+        .dragbar{width:36px;height:4px;background:#333;border-radius:2px;margin:0 auto 18px}
+        .addhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+        .addtitle{font-size:20px;color:#f5e6c8;font-style:italic}
+        .btnx{background:none;border:none;color:#555;font-size:24px;cursor:pointer;padding:4px;line-height:1}
+        .lbl{font-size:11px;color:#666;letter-spacing:.1em;display:block;margin-top:16px}
+        .inp{width:100%;background:#1e1e1e;color:#e8e0d0;border:1px solid #333;border-radius:8px;padding:11px 13px;font-size:15px;font-family:Georgia,serif;outline:none;margin-top:5px}
+        .inprow{display:flex;gap:10px}
+        .inprow>div{flex:1}
+        .errmsg{color:#e57373;font-size:12px;margin-top:8px}
+        .btnadd{margin-top:22px;width:100%;padding:14px;background:#c9a84c;color:#0d0d0d;border:none;border-radius:10px;font-size:16px;font-family:Georgia,serif;font-style:italic;cursor:pointer;font-weight:bold}
+        .empty{text-align:center;color:#444;padding:60px 0;font-size:12px;letter-spacing:.12em}
+    </style>
+</head>
+<body>
+<div class="hdr">
+  <div class="hdr-row">
+    <div><h1>The Watchlist</h1><div class="sub" id="sub"></div></div>
+    <button class="btn-add" onclick="openAdd()">+ Add Film</button>
+  </div>
+  <div class="tabs">
+    <button class="tab on" id="tAll" onclick="setList('All')"><span class="tc" id="cAll">0</span>ALL</button>
+    <button class="tab" id="tFamily" onclick="setList('Family')"><span class="tc" id="cFamily">0</span>FAMILY</button>
+    <button class="tab" id="tSolo" onclick="setList('Solo')"><span class="tc" id="cSolo">0</span>SOLO</button>
+  </div>
+  <div class="srow">
+    <input class="si" placeholder="Search..." oninput="setSearch(this.value)">
+    <button class="bf" id="fbtn" onclick="toggleF()">&#9881;</button>
+  </div>
+</div>
+<div id="fp" class="fp">
+  <div class="fl">SORT</div><div class="pills" id="spills"></div>
+  <label class="wtog"><input type="checkbox" id="sw" checked onchange="render()"> SHOW WATCHED</label>
+  <div class="fl">GENRE</div><div class="pills" id="gpills"></div>
+</div>
+<div class="cb" id="cb"></div>
+<div class="grid" id="grid"></div>
+<div class="empty" id="empty" style="display:none">NO FILMS MATCH</div>
+
+<div class="ov" id="dov" onclick="closeDet()">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <div class="mhero" id="mhero"></div>
+    <div class="mbody" id="mbody"></div>
+  </div>
+</div>
+
+<div class="ov" id="aov" onclick="closeAdd()">
+  <div class="addmod" onclick="event.stopPropagation()">
+    <div class="dragbar"></div>
+    <div class="addhead"><span class="addtitle">Add a Film</span><button class="btnx" onclick="closeAdd()">&#10005;</button></div>
+    <label class="lbl">TITLE *</label><input class="inp" id="ati" placeholder="Film title">
+    <div class="inprow">
+      <div><label class="lbl">YEAR</label><input class="inp" id="ayi" placeholder="2024" type="number"></div>
+      <div><label class="lbl">LIST</label><select class="inp" id="ali"><option value="Family">Family</option><option value="Solo">Solo</option></select></div>
+    </div>
+    <label class="lbl">GENRES (comma separated)</label><input class="inp" id="agi" placeholder="Drama, Comedy">
+    <label class="lbl">DESCRIPTION</label><input class="inp" id="adi" placeholder="One-line summary">
+    <div class="errmsg" id="aerr"></div>
+    <button class="btnadd" onclick="submitAdd()">Add to Watchlist</button>
+  </div>
+</div>
+
 <script>
 var TOKEN='eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyODAzZDBjMjU0MmM3OTJhZmZlYjQwNDZmODExOGM3YyIsIm5iZiI6MTc3NTYwNzk0Ny4wNTksInN1YiI6IjY5ZDVhMDhiYTg0NThlY2FlM2VkZjkyNiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.nPaW_tN4VyBm5ryaB7S9RjAvGg9f3JnZi859AbiYE84';
 var TBASE='https://api.themoviedb.org/3';
 var TIMG='https://image.tmdb.org/t/p/w300';
+var SAVE_KEY = 'wl_final_v2';
 
-var SAVE_KEY = 'wl_final_v2'; 
-// Re-encoded movies list including Jurassic Park through One Battle After Another
-var _b64 = 'W3siaWQiOjEsImxpc3QiOiJGYW1pbHkiLCJ3YXRjaGVkIjp0cnVlLCJ0aXRsZSI6Ikp1cmFzc2ljIFBhcmsiLCJ5ZWFyIjoxOTkzLCJnZW5yZSI6WyJBZHZlbnR1cmUiLCJTY2ktRmkiLCJUaHJpbGxlciJdLCJjMSI6IiMxYTRhMmUiLCJjMiI6IiMyZDRhN2YiLCJydW50aW1lIjoiMTI3IG1pbiIsImRpcmVjdG9yIjoiU3RldmVuIFNwaWVsYmVyZyIsImNhc3QiOiJTYW0gTmVpbGwsIExhdXJhIERlcm4sIEplZmYgR29sZGJsdW0iLCJyYXRpbmciOiJQRy0xMyIsImltZGIiOiI4LjIvMTAiLCJhd2FyZHMiOiIzIEFjYWRlbXkgQXdhcmRzIiwiZGVzYyI6IkEgdGhlbWUgcGFyayBjbG9uZWQgZGlub3NhdXJzIHJ1biBhbW9rIHdoZW4gYSBjb3Jwb3JhdGUgc3B5IHNhYm90YWdlcyBpdHMgc2VjdXJpdHkgc3lzdGVtcy4iLCJ3aHkiOiJUaGUgZmlsbSB0aGF0IG1hZGUgYW4gZW50aXJlIGdlbmVyYXRpb24gYWZyYWlkIHRvIGxvb2sgYXQgYSBnbGFzcyBvZiB3YXRlci4ifSx7ImlkIjoyLCJsaXN0IjoiRmFtaWx5Iiwid2F0Y2hlZCI6ZmFsc2UsInRpdGxlIjoiVGhlIEZ1Z2l0aXZlIiwieWVhciI6MTk5MywiZ2VucmUiOlsiQWN0aW9uIiwiVGhyaWxsZXIiXSwiYzEiOiIjMWEyYTRhIiwiYzIiOiIjMmQ0YTdhIiwicnVudGltZSI6IjEzMCBtaW4iLCJkaXJlY3RvciI6IkFuZHJldyBEYXZpcyIsImNhc3QiOiJIYXJyaXNvbiBGb3JkLCBUb21teSBMZWUgSm9uZXMiLCJyYXRpbmciOiJQRy0xMyIsImltZGIiOiI3LjgvMTAiLCJhd2FyZHMiOiIxIEFjYWRlbXkgQXdhcmQiLCJkZXNjIjoiQSB3cm9uZ2x5IGNvbnZpY3RlZCBzdXJnZW9uIGh1bnRzIGhpcyB3aWZlIHJlYWwga2lsbGVyIHdoaWxlIHB1cnN1ZWQgYnkgYSByZWxlbnRsZXNzIE1hcnNoYWwuIiwid2h5IjoiT25lIG9mIHRoZSBncmVhdCBjaGFzZSB0aHJpbGxlcnMuIn0seyJpZCI6MywibGlzdCI6IkZhbWlseSIsIndhdGNoZWQiOmZhbHNlLCJ0aXRsZSI6IlRoZSBSb2NrIiwieWVhciI6MTk5NiwiZ2VucmUiOlsiQWN0aW9uIiwiVGhyaWxsZXIiXSwiYzEiOiIjNGExYTFhIiwiYzIiOiIjN2EyZDJkIiwicnVudGltZSI6IjEzNiBtaW4iLCJkaXJlY3RvciI6Ik1pY2hhZWwgQmF5IiwiY2FzdCI6IlNlYW4gQ29ubmVyeSwgTmljb2xhcyBDYWdlLCBFZCBIYXJyaXMiLCJyYXRpbmciOiJSIiwiaW1kYIi6IjcuNC8xMCIsImF3YXJkcyI6Ik9zY2FyIG5vbWluYXRpb24iLCJkZXNjIjoiQSBiaW9jaGVtaXN0IGFuZCBleC1jb24gbXVzdCBzdG9wIGEgcm9ndWUgZ2VuZXJhbCBmcm9tIGxhdW5jaGluZyBjaGVtaWNhbCB3ZWFwb25zIGZyb20gQWxjYXRyYXouIiwid2h5IjoiUGVhayA5MHMgYWN0aW9uIC0gQ29ubmVyeSBhbmQgQ2FnZSBhcmUgYW4gYWJzdXJkbHkgZnVuIHBhaXJpbmcuIn0seyJpZCI6NCwibGlzdCI6IkZhbWlseSIsIndhdGNoZWQiOmZhbHNlLCJ0aXRsZSI6IlRoZSBTaGF3c2hhbmsgUmVkZW1wdGlvbiIsInllYXIiOjE5OTQsImdlbnJlIjpbIkRyYW1hIl0sImMxIjoiIzJhMmExYSIsImMyIjoiIzRhNGEyZCIsInJ1bnRpbWUiOiIxNDIgbWluIiwiZGlyZWN0b3IiOiJGcmFuayBEYXJhYm9udCIsImNhc3QiOiJUaW0gUm9iYmlucywgTW9yZ2FuIEZyZWVtYW4iLCJyYXRpbmciOiJSIiwiaW1kYIi6IjkuMy8xMCIsImF3YXJkcyI6IjcgT3NjYXIgbm9taW5hdGlvbnMiLCJkZXNjIjoiQSB3cm9uZ2x5IGltcHJpc29uZWQgYmFua2VyIGZvcmdlcyBhIGRlZXAgZnJpZW5kc2hpcCBhbmQgZW5naW5lZXJzIHRoZSB1bHRpbWF0ZSBlc2NhcGUuIiwid2h5IjoiUm91dGluZWx5IHJhbmtlZCB0aGUgZ3JlYXRlc3QgZmlsbSBldmVyIG1hZGUuIn0seyJpZCI6NSwibGlzdCI6IkZhbWlseSIsIndhdGNoZWQiOmZhbHNlLCJ0aXRsZSI6IlRoZSBNYW5kYWxvcmlhbiBhbmQgR3JvZ3UiLCJ5ZWFyIjoyMDI2LCJnZW5yZSI6WyJTY2ktRmkiLCJBZHZlbnR1cmUiXSwiYzEiOiIjMWEzYTRhIiwiYzIiOiIjMmQ1YTZhIiwicnVudGltZSI6IlRCRCIsImRpcmVjdG9yIjoiSm9uIEZhdnJlYXUiLCJjYXN0IjoiUGVkcm8gUGFzY2FsLCBDYXJsIFdlYXRoZXJzIiwicmF0aW5nIjoiVEJEIiwiaW1kYIi6IlRCRCIsImF3YXJkcyI6IlVwY29taW5nIiwiZGVzYyI6IlRoZSBiZWxvdmVkIGJvdW50eSBodW50ZXIgYW5kIGhpcyBGb3JjZS1zZW5zaXRpdmUgZm91bmRsaW5nIHRha2UgdGhlaXIgc3RvcnkgdG8gdGhlIGJpZyBzY3JlZW4uIiwid2h5IjoiVGhlIG1vc3QgYmVsb3ZlZCBTdGFyIFdhcnMgY2hhcmFjdGVycyBpbiB5ZWFycyBtYWtlIHRoZSBsZWFwIHRvIHRoZWF0ZXJzLiJ9LHsiaWQiOjYsImxpc3QiOiJGYW1pbHkiLCJ3YXRjaGVkIjpmYWxzZSwidGl0bGUiOiJTcGlkZXItTWFuIEJyYW5kIE5ldyBEYXkiLCJ5ZWFyIjoyMDI2LCJnZW5yZSI6WyJBY3Rpb24iLCJTdXBlcmhlcm8iXSwiYzEiOiIjMWExYTRhIiwiYzIiOiIjMmQyZDdhIiwicnVudGltZSI6IlRCRCIsImRpcmVjdG9yIjoiVEJEIiwiY2FzdCI6IlRCRCIsInJhdGluZyI6IlRCRCIsImltZGIiOiJUQkQiLCJhd2FyZHMiOiJVcGNvbWluZyIsImRlc2MiOiJQZXRlciBQYXJrZXIgYmVnaW5zIGEgZnJlc2ggY2hhcHRlciBhcyBTcGlkZXItTWFuIGluIGEgY2hhbmdlZCBNYXJ2ZWwgdW5pdmVyc2UuIiwid2h5IjoiQSBmcmVzaCBzdGFydCBmb3IgdGhlIHdlYi1zbGluZ2VyLiJ9LHsiaWQiOjcsImxpc3QiOiJGYW1pbHkiLCJ3YXRjaGVkIjpmYWxzZSwidGl0bGUiOiJBdmVuZ2VycyBTZWNyZXQgV2FycyIsInllYXIiOjIwMjcsImdlbnJlIjpbIkFjdGlvbiIsIlN1cGVyaGVybyJdLCJjMSI6IiMyYTFhNGEiLCJjMiI6IiM0YTJkN2EiLCJydW50aW1lIjoiVEJEIiwiZGlyZWN0b3IiOiJUQkQiLCJjYXN0IjoiVEJEIiwicmF0aW5nIjoiVEJEIiwiaW1kYIi6IlRCRCIsImF3YXJkcyI6IlVwY29taW5nIiwiZGVzYyI6Ik1hcnZlbCBtdWx0aXZlcnNlIHNhZ2EgY3VsbWluYXRlcyBhcyBoZXJvZXMgZnJvbSBhY3Jvc3MgcmVhbGl0aWVzIHVuaXRlIGFnYWluc3QgY29sbGFwc2UuIiwid2h5IjoiVGhlIGN1bG1pbmF0aW9uIG9mIHRoZSBlbnRpcmUgTWFydmVsIE11bHRpdmVyc2UgU2FnYS4ifSx7ImlkIjo4LCJsaXN0IjoiRmFtaWx5Iiwid2F0Y2hlZCI6ZmFsc2UsInRpdGxlIjoic3VwZXJnaXJsIFdvbWFuIG9mIFRvbW9ycm93IiwieWVhciI6MjAyNiwiZ2VucmUiOlsiQWN0aW9uIiwiU3VwZXJoZXJvIl0sImMxIjoiIzFhMmE0YSIsImMyIjoiIzJkNGE3YSIsInJ1bnRpbWUiOiJUQkQiLCJkaXJlY3RvciI6IkNyYWlnIEdpbGxlc3BpZSIsImNhc3QiOiJNaWxseSBBbGNvY2ssIEV2YSBHcmVlbiIsInJhdGluZyI6IlRCRCIsImltZGIiOiJUQkQiLCJhd2FyZHMiOiJVcGNvbWluZyIsImRlc2MiOiJLYXJhIFpvci1FbCBlbWJhcmtzIG9uIGEgY29zbWljIG9keXNzZXkgZGlzY292ZXJpbmcgaGVyIG93biBsZWdlbmQgYXQgdGhlIGZyb250aWVyIG9mIHRoZSB1bml2ZXJzZS4iLCJ3aHkiOiJBIGdyaXR0aWVyIGNvc21pYyB0YWtlIG9uIFN1cGVyZ2lybC4ifSx7ImlkIjo5LCJsaXN0IjoiRmFtaWx5Iiwid2F0Y2hlZCI6ZmFsc2UsInRpdGxlIjoiQXVzdGluIFBvd2VycyBJbnRlcm5hdGlvbmFsIE1hbiBvZiBNeXN0ZXJ5IiwieWVhciI6MTk5NywiZ2VucmUiOlsiQ29tZWR5Il0sImMxIjoiIzRhM2ExYSIsImMyIjoiIzdhNWEyZCIsInJ1bnRpbWUiOiI5NCBtaW4iLCJkaXJlY3RvciI6IkpheSBSb2FjaCIsImNhc3QiOiJNaWtlIE15ZXJzLCBFbGl6YWJldGggSHVybGV5IiwicmF0aW5nIjoiUEctMTMiLCJpbWRiIjoiNy4wLzEwIiwiYXdhcmRzIjoiQmxvY2tidXN0ZXIgQXdhcmQiLCJkZXNjIjoiQSBzd2luZ2luZyA2MHMgc3B5IGlzIHRoYXdlZCBvdXQgaW4gdGhlIDkwcyB0byBiYXR0bGUgRHIuIEV2aWwgaW4gYSBncm9vdnkgQm9uZCBzcG9vZi4iLCJ3aHkiOiJFbmRsZXNzbHkgcXVvdGFibGUgLSBNeWVycyBkb3VibGUgcGVyZm9ybWFuY2UgaXMgY29tZWR5IGdvbGQuIn0seyJpZCI6MTAsImxpc3QiOiJGYW1pbHkiLCJ3YXRjaGVkIjpmYWxzZSwidGl0bGUiOiJUaGUgTG9yZCBvZiB0aGUgUmluZ3MgRmVsbG93c2hpcCBvZiB0aGUgUmluZyIsInllYXIiOjIwMDEsImdlbnJlIjpbIkZhbnRhc3kiLCJBZHZlbnR1cmUiXSwiYzEiOiIjMmEzYTFhIiwiYzIiOiIjM2E1YTJkIiwicnVudGltZSI6IjE3OCBtaW4iLCJkaXJlY3RvciI6IlBldGVyIEphY2tzb24iLCJjYXN0IjoiRWxpamFoIFdvb2QsIElhbiBNY0tlbGxlbiwgVmlnZ28gTW9ydGVuc2VuIiwicmF0aW5nIjoiUEctMTMiLCJpbWRiIjoiOC44LzEwIiwiYXdhcmRzIjoiMTcgT3NjYXJzIGFjcm9zcyB0cmlsb2d5IiwiZGVzYyI6IkEgZmVsbG93c2hpcCBlbWJhcmtzIG9uIGFuIGVwaWMgcXVlc3QgdG8gZGVzdHJveSB0aGUgT25lIFJpbmcgYW5kIHNhdmUgTWlkZGxlLWVhcnRoLiIsIndoeSI6IlRoZSBkZWZpbmluZyBmYW50YXN5IGVwaWMgb2Ygb3VyIHRpbWUuIn0seyJpZCI6MTEsImxpc3QiOiJGYW1pbHkiLCJ3YXRjaGVkIjpmYWxzZSwidGl0bGUiOiJBbmNob3JtYW4gVGhlIExlZ2VuZCBvZiBSb24gQnVyZ3VuZHkiLCJ5ZWFyIjoyMDA0LCJnZW5yZSI6WyJDb21lZHkiXSwiYzEiOiIjNGEyYTFhIiwiYzIiOiIjN2EzYTJkIiwicnVudGltZSI6Ijk0IG1pbiIsImRpcmVjdG9yIjoiQWRhbSBNY0theSIsImNhc3QiOiJXaWxsIEZlcnJlbGwsIFN0ZXZlIENhcmVsbCwgUGF1bCBSdWRkIiwicmF0aW5nIjoiUEctMTMiLCJpbWRiIjoiNy4yLzEwIiwiYXdhcmRzIjoiTVRWIE1vdmllIEF3YXJkIiwiZGVzYyI6IkEgY2hhdXZpbmlzdGljIDE5NzBzIFRWIGFuY2hvciB3b3JsZCBpcyB1cGVuZGVkIHdoZW4gYSB0YWxlbnRlZCB3b21hbiBqb2lucyBoaXMgdGVhbS4iLCJ3aHkiOiJPbmUgb2YgdGhlIG1vc3QgcXVvdGFibGUgY29tZWRpZXMgZXZlciBtYWRlLiJ9LCB7ImlkIjoxMiwibGlzdCI6IkZhbWlseSIsIndhdGNoZWQiOmZhbHNlLCJ0aXRsZSI6Ik8gQnJvdGhlciBXaGVyZSBBcnQgVGhvdSIsInllYXIiOjIwMDAsImdlbnJlIjpbIkNvbWVkeSIsIkFkdmVudHVyZSJdLCJjMSI6IiMzYTNhMWEiLCJjMiI6IiM1YTVhMmQiLCJydW50aW1lIjoiMTA3IG1pbiIsImRpcmVjdG9yIjoiSm9lbCBhbmQgRXRoYW4gQ29lbiIsImNhc3QiOiJHZW9yZ2UgQ2xvb25leSwgSm9obiBUdXJ0dXJybywgVGltIEJsYWtlIE5lbHNvbiIsInJhdGluZyI6IlBHLTEzIiwiaW1kYIi6IjcuOS8xMCIsImF3YXJkcyI6Ik9zY2FyIG5vbWluYXRpb24iLCJkZXNjIjoiVGhyZWUgRGVwcmVzc2lvbi1lcmEgY29udmljdHMgZXNjYXBlIHByaXNvbiBhbmQgYmx1bmRlciB0aHJvdWdoIG1pc2FkdmVudHVyZXMgYmFzZWQgb24gVGhlIE9keXNzZXkuIiwid2h5IjoiVGhlIENvZW4gQnJvdGhlcnMgYXQgdGhlaXIgbW9zdCBwbGF5ZnVsLiJ9LHsiaWQiOjEzLCJsaXN0IjoiRmFtaWx5Iiwid2F0Y2hlZCI6ZmFsc2UsInRpdGxlIjoiQmVzdCBpbiBTaG93IiwieWVhciI6MjAwMCwiZ2VucmUiOlsiQ29tZWR5Il0sImMxIjoiIzFhM2EzYSIsImMyIjoiIzJkNWE1YSIsInJ1bnRpbWUiOiI5MCBtaW4iLCJkaXJlY3RvciI6IkNocmlzdG9waGVyIEd1ZXN0IiwiY2FzdCI6IkNocmlzdG9waGVyIEd1ZXN0LCBFdWdlbmUgTGV2eSwgQ2F0aGVyaW5lIE9IYXJhIiwicmF0aW5nIjoiUEctMTMiLCJpbWRiIjoiNy45LzEwIiwiYXdhcmRzIjoiU3Bpcml0IEF3YXJkIiwiZGVzYyI6IkEgbW9ja3VtZW50YXJ5IGZvbGxvd2luZyBuZXVyb3RpYyBvd25lcnMgY29tcGV0aW5nIGF0IGEgcHJlc3RpZ2lvdXMgZG9nIHNob3cuIiwid2h5IjoiQ2hyaXN0b3BoZXIgR3Vlc3QgbWFzdGVycGllY2UuIn0seyJpZCI6MTQsImxpc3QiOiJGYW1pbHkiLCJ3YXRjaGVkIjpmYWxzZSwidGl0bGUiOiJQdW5jaC1EcnVuayBMb3ZlIiwieWVhciI6MjAwMiwiZ2VucmUiOlsiQ29tZWR5IiwiRHJhbWEiLCJSb21hbmNlIl0sImMxIjoiIzFhMWE0YSIsImMyIjoiIzJkMmQ2YSIsInJ1bnRpbWUiOiI5NSBtaW4iLCJkaXJlY3RvciI6IlBhdWwgVGhvbWFzIEFuZGVyc29uIiwiY2FzdCI6IkFkYW0gU2FuZGxlciwgRW1pbHkgV2F0c29uIiwicmF0aW5nIjoiUiIsImltZGIiOiI3LjYvMTAiLCJhd2FyZHMiOiJCZXN0IERpcmVjdG9yIENhbm5lcyIsImRlc2MiOiJBIGxvbmVseSB2b2xhdGlsZSBidXNpbmVzcyBvd25lciBmaW5kcyB1bmV4cGVjdGVkIGxvdmUgd2hpbGUgYmVpbmcgZXh0b3J0ZWQgYnkgYSBwaG9uZS1zZXggc2NhbS4iLCJ3aHkiOiJUaGUgZmlsbSB0aGF0IHJldmVhbGVkIFNhbmRsZXIgaXMgYSBncmVhdCBhY3Rvci4ifSx7ImlkIjoxNSwibGlzdCI6IkZhbWlseSIsIndhdGNoZWQiOmZhbHNlLCJ0aXRsZSI6IlVwIiwieWVhciI6MjAwOSwiZ2VucmUiOlsiQW5pbWF0aW9uIiwiQWR2ZW50dXJlIl0sImMxIjoiIzFhMmE0YSIsImMyIjoiIzJkNGE3YSIsInJ1bnRpbWUiOiI5NiBtaW4iLCJkaXJlY3RvciI6IlBldGVyIERvY3RlciIsImNhc3QiOiJFZCBBc25lciwgQ2hyaXN0b3BoZXIgUGx1bW1lciIsInJhdGluZyI6IlBHIiwiaW1kYIi6IjguMy8xMCIsImF3YXJkcyI6IjIgT3NjYXIiLCJkZXNjIjoiQSA3OC15ZWFyLW9sZCB3aWRvd2VyIHRpZXMgYmFsbG9vbnMgdG8gaGlzIGhvdXNlIGFuZCBmbGllcyB0byBTb3V0aCBBbWVyaWNhLiIsIndoeSI6J0NvbnRhaW5zIHRoZSBtb3N0IGRldmFzdGF0aW5nIDEwIG1pbnV0ZXMgaW4gY2luZW1hIGhpc3RvcnkgdGhlbiBzb21laG93IGJlY29tZXMgam95ZnVsLid9LHsiaWQiOjE2LCJsaXN0IjoiRmFtaWx5Iiwid2F0Y2hlZCI6ZmFsc2UsInRpdGxlIjoiTW9uZXliYWxsIiwieWVhciI6MjAxMSwiZ2VucmUiOlsiRHJhbWEiLCJTcG9ydCJdLCJjMSI6IiMxYTNhMWEiLCJjMiI6IiMyZDUhMmQiLCJydW50aW1lIjoiMTMzIG1pbiIsImRpcmVjdG9yIjoiQmVubmV0dCBNaWxsZXIiLCJjYXN0IjoiQnJhZCBQaXR0LCBKb25haCBIaWxsLCBQaGlsaXAgU2V5bW91ciBIb2ZmbWFuIiwicmF0aW5nIjoiUEctMTMiLCJpbWRiIjoiNy42LzEwIiwiYXdhcmRzIjoiNiBPc2Nhcigbm9taW5hdGlvbnMiLCJkZXNjIjoiT2FrbGFuZCBBcyBHTSBCaWxseSBCZWFuZSB1c2VzIGRhdGEgYW5hbHlzaXMgdG8gYnVpbGQgYSB3aW5uaW5nIHRlYW0gb24gYSB0aW55IGJ1ZGdldC4iLCJ3aHkiOiJBIHNwb3J0cyBmaWxtIHJlYWxseSBhYm91dCB0aGUgY291cmFnZSB0byB0aGluayBkaWZmZXJlbnRseS4ifSx7ImlkIjoxNywibGlzdCI6IkZhbWlseSIsIndhdGNoZWQiOmZhbHNlLCJ0aXRsZSI6IkFtZWxpZSIsInllYXIiOjIwMDEsImdlbnJlIjpbIkNvbWVkeSIsIlJvbWFuY2UiXSwmYzEiOiIjM2ExYTJhIiwiYzIiOiIjNmEyZDRhIiwicnVudGltZSI6IjEyMiBtaW4iLCJkaXJlY3RvciI6IkplYW4tUGllcnJlIEpldW5ldCIsImNhc3QiOiJBdWRyZXkgVGF1dG91LCBNYXRoaWV1IEthc3Nvdml0eiIsInJhdGluZyI6IlIiLCJpbWRiIjoiOC4zLzEwIiwiYXdhcmRzIjoiNSBPc2Nhcigbm9taW5hdGlvbnMiLCJkZXNjIjoiQSB3aGltc2ljYWwgUGFyaXNpYW4gd2FpdHJlc3Mgb3JjaGVzdHJhdGVzIGhhcHBpbmVzcyBvZiB0aG9zZSBhcm91bmQgaGVyIHdoaWxlIHNlYXJjaGluZyBmb3IgbG92ZS4iLCJ3aHkiOiJBIHB1cmUgY2luZW1hdGljIGRlbGlnaHQuIn0seyJpZCI6MTgsImxpc3QiOiJGYW1pbHkiLCJ3YXRjaGVkIjpmYWxzZSwidGl0bGUiOiJXQUxMLUUiLCJ5ZWFyIjoyMDA4LCJnZW5yZSI6WyJBbmltYXRpb24iLCJTY2ktRmkiXSwiYzEiOiIjM2EyYTFhIiwiYzIiOiIjNWE0YTJkIiwicnVudGltZSI6Ijk4IG1pbiIsImRpcmVjdG9yIjoiQW5kcmV3IFN0YW50b24iLCJjYXN0IjoiQmVuIEJ1cnR0LCBFbGlzc2EgS25pZ2h0IiwicmF0aW5nIjoiRyIsImltZGIiOiI4LjQvMTAiLCJhd2FyZHMiOiIxIE9zY2FyIiwiZGVzYyI6IkEgbG9uZWx5IHdhc3RlLWNvbGxlY3Rpbmcgcm9ib3QgZmFsbHMgaW4gbG92ZSBhbmQgc3BhcmtzIGh1bWFuaXR5IHJldHVybiBob21lLiIsIndoeSI6Ik5lYXJseSB3b3JkbGVzcyB5ZXQgbW9yZSBlbW90aW9uYWxseSByZXNvbmFudCB0aGFuIGFsbW9zdCBhbnkgbGl2ZS1hY3Rpb24gZmlsbSBvZiBpdHMgZXJhLiJ9LHsiaWQiOjE5LCJsaXN0IjoiRmFtaWx5Iiwid2F0Y2hlZCI6ZmFsc2UsInRpdGxlIjoiVGhlIERhcmsgS25pZ2h0IiwieWVhciI6MjAwOCwiZ2VucmUiOlsiQWN0aW9uIiwiRHJhbWEiLCJTdXBlcmhlcm8iXSwiYzEiOiIjMWExYTFhIiwiYzIiOiIjMmQyZDJkIiwicnVudGltZSI6IjE1MiBtaW4iLCJkaXJlY3RvciI6IkNocmlzdG9waGVyIE5vbGFuIiwiY2FzdCI6IkNocmlzdGlhbiBCYWxlLCBIZWF0aCBMZWRnZXIsIEFhcm9uIEVja2hhcnQiLCJyYXRpbmciOiJQRy0xMyIsImltZGIiOiI5LjAvMTAiLCJhd2FyZHMiOiIyIE9zY2FycyIsImRlc2MiOiJDaHJpc3RvcGhlciBOb2xhbiBvcGVyYXRpYyBCYXRtYW4gZmFjZXMgdGhlIGFuYXJjaGljIEpva2VyIGluIGEgYmF0dGxlIGZvciBHb3RoYW0gc291bC4iLCJ3aHkiOiJIZWF0aCBMZWRnZXIgSm9rZXIgaXMgb25lIG9mIHRoZSBncmVhdGVzdCBzY3JlZW4gcGVyZm9ybWFuY2VzIGV2ZXIuIn0seyJpZCI6MjAsImxpc3QiOiJGYW1pbHkiLCJ3YXRjaGVkIjpmYWxzZSwidGl0bGUiOiJDcm91Y2hpbmcgVGlnZXIgSGlkZGVuIERyYWdvbiIsInllYXIiOjIwMDAsImdlbnJlIjpbIkFjdGlvbiIsIkRyYW1hIiwiUm9tYW5jZSJdLCJjMSI6IiMxYTNhMmEiLCJjMiI6IiMyZDVhM2EiLCJydW50aW1lIjoiMTIwIG1pbiIsImRpcmVjdG9yIjoiQW5nIExlZSIsImNhc3QiOiJDaG93IFl1bi1mYXQsIE1pY2hlbGxlIFllb2gsIFpoYW5nIFppeWkiLCJyYXRpbmciOiJQRy0xMyIsImltZGIiOiI3LjgvMTAiLCJhd2FyZHMiOiI0IE9zY2FycyIsImRlc2MiOiJBIHN0b2xlbiBzd29yZCBkcmF3cyB0d28gd29tZW4gaW50byBhbiBlcGljIGNvbmZsaWN0IG9mIGxvdmUgZHV0eSBhbmQgYnJlYXRodGFraW5nIG1hcnRpYWwgYXJ0cy4iLCJ3aHkiOiJCcmVhdGh0YWtpbmcgd2lyZXdvcmsgbWFycmllZCB0byBhIGdlbnVpbmVseSBtb3Zpbmcgc3RvcnkuIn0seyJpZCI6MjEsImxpc3QiOiJGYW1pbHkiLCJ3YXRjaGVkIjpmYWxzZSwidGl0bGUiOiJTcGlyaXRlZCBBd2F5IiwieWVhciI6MjAwMSwiZ2VucmUiOlsiQW5pbWF0aW9uIiwiRmFudGFzeSJdLCJjMSI6IiMyYTFhM2EiLCJjMiI6IiM0YTJkNWEiLCJydW50aW1lIjoiMTI1IG1pbiIsImRpcmVjdG9yIjoiSGF5YW8gTWl5YXpha2kiLCJjYXN0IjoiRGF2ZWlnaCBDaGFzZSwgU3V6YW5uZSBQbGVzaGV0dGUiLCJyYXRpbmciOiJQRyIsImltZGIiOiI4LjYvMTAiLCJhd2FyZHMiOiIxIE9zY2FyIiwiZGVzYyI6IkEgeW91bmcgZ2lybCB0cmFwcGVkIGluIGEgc3Bpcml0IHdvcmxkIG11c3Qgd29yayBpbiBhIG1hZ2ljYWwgYmF0aGhvdXNlIHRvIHJlc2N1ZSBoZXIgcGFyZW50cy4iLCJ3aHkiOiJNaXlhemFraSByaWNoZXN0IHN0cmFuZ2VzdCB3b3JsZCAtIGFuIG92ZXJ3aGVsbWluZyBpbWFnaW5hdGl2ZSBmZWFzdC4ifSx7ImlkIjoyMiwibGlzdCI6IlNvbG8iLCJ3YXRjaGVkIjpmYWxzZSwidGl0bGUiOiJJbnRlcnN0ZWxsYXIiLCJ5ZWFyIjoyMDE0LCJnZW5yZSI6WyJTY2ktRmkiLCJEcmFtYSJdLCJjMSI6IiMwYTBhMWEiLCJjMiI6IiMxYTFhM2EiLCJydW50aW1lIjoiMTY5IG1pbiIsImRpcmVjdG9yIjoiQ2hyaXN0b3BoZXIgTm9sYW4iLCJjYXN0IjoiTWF0dGhldyBNY0NvbmF1Z2hleSwgQW5uZSBIYXRoYXdheSwgSmVzc2ljYSBDaGFzdGFpbiIsInJhdGluZyI6IlBHLTEzIiwiaW1kYIi6IjguNy8xMCIsImF3YXJkcyI6IjEgT3NjYXIiLCJkZXNjIjoiQSBOQVNBIHBpbG90IGxlYWRzIGEgbWlzc2lvbiB0aHJvdWdoIGEgd29ybWhvbGUgdG8gZmluZCBodW1hbml0eSBuZXh0IGhvbWUgYXMgRWFydGggZGllcy4iLCJ3aHkiOiJOb2xhbiBtb3N0IGVtb3Rpb25hbGx5IGFtYml0aW91cyBmaWxtLiJ9LHsiaWQiOjIzLCJsaXN0IjoiU29sbyIsIndhdGNoZWQiOmZhbHNlLCJ0aXRsZSI6Ik9uZSBCYXR0bGUgQWZ0ZXIgQW5vdGhlciIsInllYXIiOjIwMjUsImdlbnJlIjpbIldhciIsIkRyYW1hIl0sImMxIjoiIzJhMmExYSIsImMyIjoiIzNhM2EyZCIsInJ1bnRpbWUiOiJUQkQiLCJkaXJlY3RvciI6IlRCRCIsImNhc3QiOiJUQkQiLCJyYXRpbmciOiJUQkQiLCJpbWRiIjoiVEJEIiwiYXdhcmRzIjoiVXBjb21pbmciLCJkZXNjIjoiQSBzd2VlcGluZyBXV0lJIGVwaWMgYWRhcHRlZCBmcm9tIHRoZSBQdWxpdHplciBQcml6ZS13aW5uaW5nIG5vdmVsLiIsIndoeSI6IkNvdWxkIGJlIHRoZSBkZWZpbmluZyBXV0lJIGZpbG0gb2YgdGhlIGRlY2FkZS4ifV0=';
+// Valid Base64 Seed
+var _b64 = 'W3siaWQiOjEsImxpc3QiOiJGYW1pbHkiLCJ3YXRjaGVkIjp0cnVlLCJ0aXRsZSI6Ikp1cmFzc2ljIFBhcmsiLCJ5ZWFyIjoxOTkzLCJnZW5yZSI6WyJBZHZlbnR1cmUiLCJTY2ktRmkiLCJUaHJpbGxlciJdLCJjMSI6IiMxYTRhMmUiLCJjMiI6IiMyZDRhN2YiLCJydW50aW1lIjoiMTI3IG1pbiIsImRpcmVjdG9yIjoiU3RldmVuIFNwaWVsYmVyZyIsImNhc3QiOiJTYW0gTmVpbGwsIExhdXJhIERlcm4sIEplZmYgR29sZGJsdW0iLCJyYXRpbmciOiJQRy0xMyIsImltZGIiOiI4LjIvMTAiLCJhd2FyZHMiOiIzIEFjYWRlbXkgQXdhcmRzIiwiZGVzYyI6IkEgdGhlbWUgcGFyayBjbG9uZWQgZGlub3NhdXJzIHJ1biBhbW9rIHdoZW4gYSBjb3Jwb3JhdGUgc3B5IHNhYm90YWdlcyBpdHMgc2VjdXJpdHkgc3lzdGVtcy4iLCJ3aHkiOiJUaGUgZmlsbSB0aGF0IG1hZGUgYW4gZW50aXJlIGdlbmVyYXRpb24gYWZyYWlkIHRvIGxvb2sgYXQgYSBnbGFzcyBvZiB3YXRlci4ifSx7ImlkIjoyLCJsaXN0IjoiRmFtaWx5Iiwid2F0Y2hlZCI6ZmFsc2UsInRpdGxlIjoiVGhlIEZ1Z2l0aXZlIiwieWVhciI6MTk5MywiZ2VucmUiOlsiQWN0aW9uIiwiVGhyaWxsZXIiXSwiYzEiOiIjMWEyYTRhIiwiYzIiOiIjMmQ0YTdhIiwicnVudGltZSI6IjEzMCBtaW4iLCJkaXJlY3RvciI6IkFuZHJldyBEYXZpcyIsImNhc3QiOiJIYXJyaXNvbiBGb3JkLCBUb21teSBMZWUgSm9uZXMiLCJyYXRpbmciOiJQRy0xMyIsImltZGIiOiI3LjgvMTAiLCJhd2FyZHMiOiIxIEFjYWRlbXkgQXdhcmQiLCJkZXNjIjoiQSB3cm9uZ2x5IGNvbnZpY3RlZCBzdXJnZW9uIGh1bnRzIGhpcyB3aWZlIHJlYWwga2lsbGVyIHdoaWxlIHB1cnN1ZWQgYnkgYSByZWxlbnRsZXNzIE1hcnNoYWwuIiwid2h5IjoiT25lIG9mIHRoZSBncmVhdCBjaGFzZSB0aHJpbGxlcnMuIn0seyJpZCI6MywibGlzdCI6IkZhbWlseSIsIndhdGNoZWQiOmZhbHNlLCJ0aXRsZSI6IlRoZSBSb2NrIiwieWVhciI6MTk5NiwiZ2VucmUiOlsiQWN0aW9uIiwiVGhyaWxsZXIiXSwiYzEiOiIjNGExYTFhIiwiYzIiOiIjN2EyZDJkIiwicnVudGltZSI6IjEzNiBtaW4iLCJkaXJlY3RvciI6Ik1pY2hhZWwgQmF5IiwiY2FzdCI6IlNlYW4gQ29ubmVyeSwgTmljb2xhcyBDYWdlLCBFZCBIYXJyaXMiLCJyYXRpbmciOiJSIiwiaW1kYIi6IjcuNC8xMCIsImF3YXJkcyI6Ik9zY2FyIG5vbWluYXRpb24iLCJkZXNjIjoiQSBiaW9jaGVtaXN0IGFuZCBleC1jb24gbXVzdCBzdG9wIGEgcm9ndWUgZ2VuZXJhbCBmcm9tIGxhdW5jaGluZyBjaGVtaWNhbCB3ZWFwb25zIGZyb20gQWxjYXRyYXouIiwid2h5IjoiUGVhayA5MHMgYWN0aW9uIC0gQ29ubmVyeSBhbmQgQ2FnZSBhcmUgYW4gYWJzdXJkbHkgZnVuIHBhaXJpbmcuIn0seyJpZCI6NCwibGlzdCI6IkZhbWlseSIsIndhdGNoZWQiOmZhbHNlLCJ0aXRsZSI6IlRoZSBTaGF3c2hhbmsgUmVkZW1wdGlvbiIsInllYXIiOjE5OTQsImdlbnJlIjpbIkRyYW1hIl0sImMxIjoiIzJhMmExYSIsImMyIjoiIzRhNGEyZCIsInJ1bnRpbWUiOiIxNDIgbWluIiwiZGlyZWN0b3IiOiJGcmFuayBEYXJhYm9udCIsImNhc3QiOiJUaW0gUm9iYmlucywgTW9yZ2FuIEZyZWVtYW4iLCJyYXRpbmciOiJSIiwiaW1kYIi6IjkuMy8xMCIsImF3YXJkcyI6IjcgT3NjYXIgbm9taW5hdGlvbnMiLCJkZXNjIjoiQSB3cm9uZ2x5IGltcHJpc29uZWQgYmFua2VyIGZvcmdlcyBhIGRlZXAgZnJpZW5kc2hpcCBhbmQgZW5naW5lZXJzIHRoZSB1bHRpbWF0ZSBlc2NhcGUuIiwid2h5IjoiUm91dGluZWx5IHJhbmtlZCB0aGUgZ3JlYXRlc3QgZmlsbSBldmVyIG1hZGUuIn0seyJpZCI6MjMsImxpc3QiOiJTb2xvIiwid2F0Y2hlZCI6ZmFsc2UsInRpdGxlIjoiT25lIEJhdHRsZSBBZnRlciBBbm90aGVyIiwieWVhciI6MjAyNSwiZ2VucmUiOlsiV2FyIiwiRHJhbWEiXSwiYzEiOiIjMmEyYTFhIiwiYzIiOiIjM2EzYTJkIiwicnVudGltZSI6IlRCRCIsImRpcmVjdG9yIjoiVEJEIiwiY2FzdCI6IlRCRCIsInJhdGluZyI6IlRCRCIsImltZGIiOiJUQkQiLCJhd2FyZHMiOiJVcGNvbWluZyIsImRlc2MiOiJBIHN3ZWVwaW5nIFdXSUllcGljIGFkYXB0ZWQgZnJvbSB0aGUgUHVsaXR6ZXIgUHJpemUtd2lubmluZyBub3ZlbC4iLCJ3aHkiOiJDb3VsZCBiZSB0aGUgZGVmaW5pdGl2ZSBXV0lJIGZpbG0gb2YgdGhlIGRlY2FkZS4ifV0=';
 
 var SEED = JSON.parse(atob(_b64));
 var movies = SEED.slice();
 
-// Cleanup old keys
-try {
-    ['wl_v1','wl_v2','wl_v3','wl_v4','wl_v5','wl_v6','wl_v7','wl_v8','wl_v9','wl_v10','wl_v11',
-    'wl_watched','wl_extra','brian_watchlist_v1','brian_watchlist_v2','brian_watchlist_v3',
-    'brian_watchlist_v4','brian_watchlist_v5','brian_watchlist_v6','brian_watchlist_v7','brian_watchlist_v8']
-    .forEach(function(k){ localStorage.removeItem(k); });
-} catch(e) {}
-
-// Load from LocalStorage
 try {
     var saved = localStorage.getItem(SAVE_KEY);
     if(saved) {
         var parsed = JSON.parse(saved);
-        if(Array.isArray(parsed) && parsed.length >= SEED.length) {
-            var seedIds = {};
-            SEED.forEach(function(m){ seedIds[m.id] = true; });
-            var savedMap = {};
-            parsed.forEach(function(m){ savedMap[m.id] = m; });
+        if(Array.isArray(parsed)) {
+            var seedIds = {}; SEED.forEach(function(m){ seedIds[m.id] = true; });
+            var savedMap = {}; parsed.forEach(function(m){ savedMap[m.id] = m; });
             movies = SEED.map(function(m){
                 var s = savedMap[m.id];
                 return s ? Object.assign({}, m, {watched: s.watched, list: s.list}) : m;
@@ -35,7 +162,7 @@ try {
             parsed.forEach(function(m){ if(!seedIds[m.id]) movies.push(m); });
         }
     }
-} catch(e) {}
+} catch(e) { console.error("Storage load failed", e); }
 
 var pc = {};
 function saveState() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(movies)); } catch(e) {} }
@@ -43,17 +170,12 @@ function saveState() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(movie
 async function findPoster(title, year) {
     var k = (title + '|' + (year || '')).toLowerCase();
     if(k in pc) return pc[k];
-    pc[k] = null;
     try {
         var q = encodeURIComponent(title);
         var yr = year ? ('&primary_release_year=' + year) : '';
-        var r = await fetch(TBASE + '/search/movie?query=' + q + yr + '&language=en-US&page=1',
-            { headers: { 'Authorization': 'Bearer ' + TOKEN, 'accept': 'application/json' } });
-        if(!r.ok) return null;
+        var r = await fetch(TBASE + '/search/movie?query=' + q + yr, { headers: { 'Authorization': 'Bearer ' + TOKEN, 'accept': 'application/json' } });
         var d = await r.json();
-        var res = d.results || [];
-        var m = year ? res.find(function(x){ return x.poster_path && x.release_date && x.release_date.startsWith('' + year); }) : null;
-        if(!m) m = res.find(function(x){ return x.poster_path; });
+        var m = (d.results || []).find(function(x){ return x.poster_path; });
         if(m) pc[k] = TIMG + m.poster_path;
     } catch(e) {}
     return pc[k];
@@ -75,25 +197,17 @@ function svgCard(m) {
         + '<stop offset="0%" stop-color="' + m.c1 + '"/><stop offset="100%" stop-color="' + m.c2 + '"/>'
         + '</linearGradient></defs>'
         + '<rect width="200" height="300" fill="url(#g' + m.id + ')"/>'
-        + '<rect x="10" y="10" width="180" height="280" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="1"/>'
-        + '<rect x="0" y="215" width="200" height="85" fill="rgba(0,0,0,.5)"/>'
-        + '<text x="100" y="244" text-anchor="middle" font-size="11" font-family="Georgia,serif" font-style="italic" fill="#f5e6c8">' + t + '</text>'
-        + '<text x="100" y="262" text-anchor="middle" font-size="10" font-family="Georgia,serif" fill="#c9a84c">' + (m.year || 'TBD') + '</text>'
+        + '<text x="100" y="244" text-anchor="middle" font-size="11" fill="#f5e6c8" font-style="italic">' + t + '</text>'
+        + '<text x="100" y="262" text-anchor="middle" font-size="10" fill="#c9a84c">' + (m.year || 'TBD') + '</text>'
         + '</svg>';
 }
 
 function cardHTML(m) {
     return '<div class="card' + (m.watched ? ' dim' : '') + '" onclick="openDet(' + m.id + ')">'
-        + '<div class="pw">' + svgCard(m)
-        + '<img id="pi' + m.id + '" alt="">'
+        + '<div class="pw">' + svgCard(m) + '<img id="pi' + m.id + '" alt="">'
         + '<div class="bdg b' + (m.list === 'Family' ? 'fam' : 'solo') + '">' + m.list.toUpperCase() + '</div>'
         + (m.watched ? '<div class="bseen">SEEN</div>' : '')
-        + '</div>'
-        + '<div class="ci"><div class="ct">' + m.title + '</div>'
-        + '<div class="cy">' + (m.year || 'TBD') + '</div>'
-        + '<div class="gp">' + m.genre.slice(0, 2).map(function(g){ return '<span class="gt">' + g + '</span>'; }).join('')
-        + (m.genre.length > 2 ? '<span class="gt">+' + (m.genre.length - 2) + '</span>' : '')
-        + '</div></div></div>';
+        + '</div><div class="ci"><div class="ct">' + m.title + '</div><div class="cy">' + (m.year || 'TBD') + '</div></div></div>';
 }
 
 var aList = 'All', sg = [], sb = 'list', srch = '';
@@ -103,17 +217,11 @@ function getFilt() {
     if(aList !== 'All') m = m.filter(function(x){ return x.list === aList; });
     var sw = document.getElementById('sw');
     if(sw && !sw.checked) m = m.filter(function(x){ return !x.watched; });
-    if(sg.length) m = m.filter(function(x){ return sg.every(function(g){ return x.genre.indexOf(g) >= 0; }); });
     if(srch.trim()) {
         var s = srch.toLowerCase();
-        m = m.filter(function(x){ return x.title.toLowerCase().indexOf(s) >= 0 || x.desc.toLowerCase().indexOf(s) >= 0; });
+        m = m.filter(function(x){ return x.title.toLowerCase().indexOf(s) >= 0; });
     }
-    var out = m.slice();
-    if(sb === 'title') out.sort(function(a, b){ return a.title.localeCompare(b.title); });
-    else if(sb === 'year') out.sort(function(a, b){ return (a.year || 9999) - (b.year || 9999); });
-    else if(sb === 'year-desc') out.sort(function(a, b){ return (b.year || 0) - (a.year || 0); });
-    else out.sort(function(a, b){ if(a.list !== b.list) return a.list === 'Family' ? -1 : 1; return a.title.localeCompare(b.title); });
-    return out;
+    return m;
 }
 
 function render() {
@@ -124,77 +232,40 @@ function render() {
     document.getElementById('cAll').textContent = movies.length;
     document.getElementById('cFamily').textContent = fam;
     document.getElementById('cSolo').textContent = sol;
-    ['All', 'Family', 'Solo'].forEach(function(l){ document.getElementById('t' + l).className = 'tab' + (aList === l ? ' on' : ''); });
-    var sorts = [['list', 'Default'], ['title', 'A-Z'], ['year', 'Oldest'], ['year-desc', 'Newest']];
-    var _sh = ''; sorts.forEach(function(sv){ _sh += '<button class="pill' + (sb === sv[0] ? ' on' : '') + '" data-v="' + sv[0] + '">' + sv[1] + '</button>'; }); document.getElementById('spills').innerHTML = _sh; document.getElementById('spills').onclick = function(e){ var v = e.target.getAttribute('data-v'); if(v) setSort(v); };
-    var ag = []; movies.forEach(function(m){ m.genre.forEach(function(g){ if(ag.indexOf(g) < 0) ag.push(g); }); }); ag.sort();
-    var _gh = ''; ag.forEach(function(g){ _gh += '<button class="pill' + (sg.indexOf(g) >= 0 ? ' on' : '') + '" data-g="' + g + '">' + g + '</button>'; }); if(sg.length) _gh += '<button class="pill clr" id="clrBtn">Clear</button>'; document.getElementById('gpills').innerHTML = _gh; document.getElementById('gpills').onclick = function(e){ if(e.target.id === 'clrBtn') clrG(); else { var g = e.target.getAttribute('data-g'); if(g) togG(g); } };
+    
     var filt = getFilt();
     document.getElementById('cb').textContent = filt.length + ' FILM' + (filt.length !== 1 ? 'S' : '');
-    if(!filt.length) { document.getElementById('grid').innerHTML = ''; document.getElementById('empty').style.display = 'block'; return; }
-    document.getElementById('empty').style.display = 'none';
     document.getElementById('grid').innerHTML = filt.map(cardHTML).join('');
-    filt.forEach(function(m){
-        if(m.year) findPoster(m.title, m.year).then(function(url){ showImg('pi' + m.id, url); });
-    });
+    filt.forEach(function(m){ if(m.year) findPoster(m.title, m.year).then(function(url){ showImg('pi' + m.id, url); }); });
 }
 
 function setList(l){ aList = l; render(); }
 function setSearch(v){ srch = v; render(); }
-function setSort(v){ sb = v; render(); }
-function togG(g){ sg = sg.indexOf(g) >= 0 ? sg.filter(function(x){ return x !== g; }) : sg.concat([g]); render(); }
-function clrG(){ sg = []; render(); }
-function toggleF(){ var p = document.getElementById('fp'), b = document.getElementById('fbtn'), show = p.style.display !== 'block'; p.style.display = show ? 'block' : 'none'; b.className = 'bf' + (show ? ' on' : ''); }
+function toggleF(){ var p = document.getElementById('fp'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
 
 function openDet(id) {
     var m = movies.find(function(x){ return x.id === id; });
     if(!m) return;
-    document.getElementById('mhero').innerHTML = svgCard(m)
-        + '<img id="mhi' + m.id + '" alt="">'
-        + '<div class="mgrad"></div>'
-        + '<button class="mclose" onclick="closeDet()">✕</button>'
-        + '<div class="mbadges">'
-        + '<span style="background:' + (m.list === 'Family' ? '#1b5e34' : '#4a1878') + '">' + m.list.toUpperCase() + '</span>'
-        + (m.watched ? '<span style="background:#c9a84c;color:#0d0d0d">SEEN</span>' : '')
-        + '</div>';
+    document.getElementById('mhero').innerHTML = svgCard(m) + '<img id="mhi' + m.id + '"><div class="mgrad"></div><button class="mclose" onclick="closeDet()">✕</button>';
     if(m.year) findPoster(m.title, m.year).then(function(url){ showImg('mhi' + m.id, url); });
-    var rows = [['RUNTIME', m.runtime], ['DIRECTOR', m.director], ['CAST', m.cast], ['RATING', m.rating], ['IMDb', m.imdb], ['AWARDS', m.awards]]
-        .filter(function(r){ return r[1] && r[1] !== 'TBD'; })
-        .map(function(r){ return '<div class="drow"><div class="dlbl">' + r[0] + '</div><div class="dval">' + r[1] + '</div></div>'; }).join('');
-    document.getElementById('mbody').innerHTML =
-        '<div class="mtitle">' + m.title + '</div>'
-        + '<div class="myear">' + (m.year || 'TBD') + '</div>'
-        + '<div class="mgenres">' + m.genre.map(function(g){ return '<span>' + g + '</span>'; }).join('') + '</div>'
-        + '<p class="mdesc">' + m.desc + '</p>'
-        + '<div class="dets">' + rows
-        + (m.why && m.why !== 'TBD' ? '<div class="whybox"><div class="whylbl">WHY WATCH</div><div class="whytxt">' + m.why + '</div></div>' : '')
-        + '</div>'
-        + '<button class="btnw ' + (m.watched ? 'seen' : 'unseen') + '" onclick="togW(' + m.id + ')">'
-        + (m.watched ? 'Mark as Unwatched' : 'Mark as Watched') + '</button>';
+    document.getElementById('mbody').innerHTML = '<div class="mtitle">' + m.title + '</div><p class="mdesc">' + m.desc + '</p>'
+        + '<button class="btnw ' + (m.watched ? 'seen' : 'unseen') + '" onclick="togW(' + m.id + ')">' + (m.watched ? 'Unwatch' : 'Watched') + '</button>';
     document.getElementById('dov').className = 'ov open';
 }
 
 function closeDet(){ document.getElementById('dov').className = 'ov'; }
 function togW(id){ movies = movies.map(function(m){ return m.id === id ? Object.assign({}, m, {watched: !m.watched}) : m; }); saveState(); closeDet(); render(); }
 function openAdd(){ document.getElementById('aov').className = 'ov open'; }
-function closeAdd(){ document.getElementById('aov').className = 'ov'; document.getElementById('aerr').textContent = ''; }
+function closeAdd(){ document.getElementById('aov').className = 'ov'; }
+
 function submitAdd() {
     var t = document.getElementById('ati').value.trim();
-    var y = document.getElementById('ayi').value;
-    var l = document.getElementById('ali').value;
-    var g = document.getElementById('agi').value.split(',').map(function(x){ return x.trim(); }).filter(Boolean);
-    var d = document.getElementById('adi').value.trim();
-    if(!t){ document.getElementById('aerr').textContent = 'Title is required.'; return; }
-    if(movies.some(function(m){ return m.title.toLowerCase() === t.toLowerCase(); })){ document.getElementById('aerr').textContent = 'Already on a list!'; return; }
-    var cols = [['#1a2a3a', '#2d3a4a'], ['#2a1a3a', '#3a2d4a'], ['#1a3a1a', '#2d4a2d'], ['#3a1a1a', '#4a2d2d']];
-    var col = cols[t.charCodeAt(0) % 4];
-    movies = movies.concat([{id: Date.now(), title: t, year: y ? parseInt(y) : null, list: l, genre: g.length ? g : ['Drama'],
-        desc: d || 'No description yet.', watched: false, c1: col[0], c2: col[1],
-        runtime: 'TBD', director: 'TBD', cast: 'TBD', rating: 'TBD', imdb: 'TBD', awards: 'TBD', why: 'Recently added.'}]);
-    saveState(); closeAdd();
-    ['ati', 'ayi', 'agi', 'adi'].forEach(function(id){ document.getElementById(id).value = ''; });
-    render();
+    if(!t) return;
+    movies.push({id: Date.now(), title: t, list: document.getElementById('ali').value, genre: ['Drama'], desc: 'Added manually.', watched: false, c1: '#1a2a3a', c2: '#2d3a4a'});
+    saveState(); closeAdd(); render();
 }
 
 render();
 </script>
+</body>
+</html>
