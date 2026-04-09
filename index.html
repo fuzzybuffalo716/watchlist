@@ -149,8 +149,27 @@ function init() {
     const saved = localStorage.getItem(SAVE_KEY);
     if (saved) {
         try {
-            movies = JSON.parse(saved);
-        } catch(e) { movies = [...SEED_DATA]; }
+            const savedMovies = JSON.parse(saved);
+            // Create a Map of saved movies by ID for quick lookup
+            const savedMap = new Map(savedMovies.map(m => [m.id, m]));
+            
+            // Merge: Keep everything from SEED_DATA (with saved 'watched' states)
+            // and append any custom movies that aren't in the SEED_DATA.
+            const seedIds = new Set(SEED_DATA.map(m => m.id));
+            
+            movies = SEED_DATA.map(seedMovie => {
+                const userVersion = savedMap.get(seedMovie.id);
+                return userVersion ? { ...seedMovie, watched: userVersion.watched, list: userVersion.list } : seedMovie;
+            });
+
+            // Add back custom movies (those not found in the original SEED_DATA)
+            const customMovies = savedMovies.filter(m => !seedIds.has(m.id));
+            movies = [...movies, ...customMovies];
+
+        } catch(e) { 
+            console.error("Storage load failed, reverting to seed", e);
+            movies = [...SEED_DATA]; 
+        }
     } else {
         movies = [...SEED_DATA];
     }
