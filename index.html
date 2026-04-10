@@ -89,16 +89,15 @@
 </div>
 
 <script>
-// This block will catch errors and show them as popups on your iPad
-window.onerror = function(msg, url, line) {
-    alert("CRITICAL ERROR: " + msg + "\nLine: " + line);
-};
-
-alert("JS Engine Starting...");
+window.onerror = function(m, u, l) { alert('ERROR: ' + m + ' on line ' + l); };
+alert('v8: Engine Online');
 
 const SUPABASE_URL = 'https://omcxkfjupbpelnepvvch.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tY3hrZmp1cGJwZWxuZXB2dmNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MDU1OTgsImV4cCI6MjA5MTI4MTU5OH0.XEUuG4wWeSyQFEHykf8aPg61ialT6bQaWxIfwJ8znP8';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// PASTE THE 'watchlist1' KEY FROM YOUR SCREENSHOT HERE:
+const SUPABASE_KEY = 'sb_publishable__y_hIOsIHu-Z7CVYpk0ueQ_c0hstZvv'; 
+
+// Renamed to 'sb' to avoid crash
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyODAzZDBjMjU0MmM3OTJhZmZlYjQwNDZmODExOGM3YyIsIm5iZiI6MTc3NTYwNzk0Ny4wNTksInN1YiI6IjY5ZDVhMDhiYTg0NThlY2FlM2VkZjkyNiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.nPaW_tN4VyBm5ryaB7S9RjAvGg9f3JnZi859AbiYE84';
 const TIMG = 'https://image.tmdb.org/t/p/w300';
@@ -155,40 +154,29 @@ let movies = [];
 const pc = {}; 
 
 async function init() {
-    document.getElementById('sub').textContent = 'Connecting to Supabase...';
-    const { data, error } = await supabase.from('movies').select('*').order('title');
-    if (error) {
-        alert("Cloud fetch failed: " + error.message);
-        movies = [];
-    } else {
-        movies = data.length ? data : [];
-    }
+    document.getElementById('sub').textContent = 'Connecting...';
+    const { data, error } = await sb.from('movies').select('*').order('title');
+    if (error) { alert('Fetch Error: ' + error.message); }
+    else { movies = data.length ? data : []; }
     render();
 }
 
-async function fetchPoster(title, year) {
-    const cacheKey = title + "|" + year;
-    if (pc[cacheKey]) return pc[cacheKey];
+async function fetchPoster(t, y) {
+    if (pc[t]) return pc[t];
     try {
-        const q = encodeURIComponent(title);
-        const r = await fetch('https://api.themoviedb.org/3/search/movie?query=' + q + '&year=' + year, {
+        const q = encodeURIComponent(t);
+        const r = await fetch('https://api.themoviedb.org/3/search/movie?query='+q+'&year='+y, {
             headers: { 'Authorization': 'Bearer ' + TMDB_TOKEN, 'accept': 'application/json' }
         });
         const d = await r.json();
-        const results = d.results || [];
-        const clean = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const target = clean(title);
-        const match = results.find(res => clean(res.title) === target && res.poster_path) || results.find(res => res.poster_path);
-        if (match) {
-            pc[cacheKey] = TIMG + match.poster_path;
-            return pc[cacheKey];
-        }
+        const m = (d.results || []).find(x => x.poster_path);
+        if (m) pc[t] = TIMG + m.poster_path;
     } catch(e) {}
-    return null;
+    return pc[t];
 }
 
 function svgPlaceholder(m) {
-    return '<svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="300" fill="' + (m.c1 || '#333') + '"/><text x="100" y="150" text-anchor="middle" fill="white" font-size="12" font-family="serif">' + m.title + '</text></svg>';
+    return '<svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="300" fill="'+(m.c1||'#333')+'"/><text x="100" y="150" text-anchor="middle" fill="white" font-size="12">'+m.title+'</text></svg>';
 }
 
 function render() {
@@ -200,24 +188,10 @@ function render() {
     document.getElementById('cSolo').textContent = movies.filter(m => m.list === 'Solo').length;
     document.getElementById('sub').textContent = movies.filter(m=>m.watched).length + ' WATCHED';
 
-    if(!movies.length) { 
-        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px; color:#555">List is empty. Tap edit on GitHub to set last line to migrateData();</div>'; 
-        return; 
-    }
+    if(!movies.length) { grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px; color:#555">Empty Cloud. Run migrateData();</div>'; return; }
 
     grid.innerHTML = filt.map(m => {
-        return '<div class="card ' + (m.watched ? 'dim' : '') + '" onclick="openDet(' + m.id + ')">' +
-            '<div class="pw">' +
-                svgPlaceholder(m) +
-                '<img id="p' + m.id + '" onload="this.style.display=\'block\'">' +
-                '<div class="bdg b' + (m.list === 'Family' ? 'fam' : 'solo') + '">' + m.list.toUpperCase() + '</div>' +
-                (m.watched ? '<div class="bseen">SEEN</div>' : '') +
-            '</div>' +
-            '<div class="ci">' +
-                '<div class="ct">' + m.title + '</div>' +
-                '<div class="cy">' + (m.year || 'TBD') + '</div>' +
-            '</div>' +
-        '</div>';
+        return '<div class="card '+(m.watched?'dim':'')+'" onclick="openDet('+m.id+')"><div class="pw">'+svgPlaceholder(m)+'<img id="p'+m.id+'" onload="this.style.display=\'block\'"><div class="bdg b'+(m.list==='Family'?'fam':'solo')+'">'+m.list.toUpperCase()+'</div>'+(m.watched?'<div class="bseen">SEEN</div>':'')+'</div><div class="ci"><div class="ct">'+m.title+'</div><div class="cy">'+(m.year||'TBD')+'</div></div></div>';
     }).join('');
 
     filt.forEach(async m => {
@@ -226,16 +200,14 @@ function render() {
     });
 }
 
-let aList = 'All', srch = '';
 function setList(l) { aList = l; document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on')); document.getElementById('t'+l).classList.add('on'); render(); }
 function setSearch(v) { srch = v; render(); }
 
 function openDet(id) {
     const m = movies.find(x => x.id === id);
-    document.getElementById('mhero').innerHTML = '<div class="mgrad"></div><button class="mclose" onclick="closeDet()">✕</button><img id="mh' + m.id + '" style="width:100%; height:100%; object-fit:cover; display:block">';
-    document.getElementById('mbody').innerHTML = '<h2 class="mtitle">' + m.title + ' (' + (m.year || 'TBD') + ')</h2><p class="mdesc">' + m.desc + '</p>' +
-        '<button class="btnw ' + (m.watched ? 'seen' : 'unseen') + '" onclick="togW(' + m.id + ')">' + (m.watched ? 'Mark Unwatched' : 'Mark Watched') + '</button>';
-    fetchPoster(m.title, m.year).then(url => { if(url) document.getElementById('mh' + m.id).src = url; });
+    document.getElementById('mhero').innerHTML = '<div class="mgrad"></div><button class="mclose" onclick="closeDet()">✕</button><img id="mh'+m.id+'" style="width:100%; height:100%; object-fit:cover; display:block">';
+    document.getElementById('mbody').innerHTML = '<h2 class="mtitle">'+m.title+'</h2><p class="mdesc">'+m.desc+'</p><button class="btnw '+(m.watched?'seen':'unseen')+'" onclick="togW('+m.id+')">'+(m.watched?'Unwatch':'Mark Watched')+'</button>';
+    fetchPoster(m.title, m.year).then(url => { if(url) document.getElementById('mh'+m.id).src = url; });
     document.getElementById('dov').style.display = 'flex';
 }
 
@@ -243,7 +215,7 @@ function closeDet() { document.getElementById('dov').style.display = 'none'; }
 
 async function togW(id) {
     const m = movies.find(x => x.id === id);
-    const { error } = await supabase.from('movies').update({ watched: !m.watched }).eq('id', id);
+    const { error } = await sb.from('movies').update({ watched: !m.watched }).eq('id', id);
     if (!error) { movies = movies.map(x => x.id === id ? {...x, watched: !x.watched} : x); render(); closeDet(); }
 }
 
@@ -252,22 +224,20 @@ function closeAdd() { document.getElementById('aov').style.display = 'none'; }
 
 async function submitAdd() {
     const t = document.getElementById('ati').value.trim();
-    const y = document.getElementById('ayi').value;
-    const l = document.getElementById('ali').value;
     if(!t) return;
-    const newMovie = { title: t, year: y ? parseInt(y) : null, list: l, watched: false, desc: "Added manually.", c1: '#333', c2: '#444', genre: ['Drama'] };
-    const { data, error } = await supabase.from('movies').insert([newMovie]).select();
+    const newMovie = { title: t, year: document.getElementById('ayi').value, list: document.getElementById('ali').value, watched: false, c1: '#333', c2: '#444' };
+    const { data, error } = await sb.from('movies').insert([newMovie]).select();
     if (!error) { movies.push(data[0]); render(); closeAdd(); }
 }
 
 async function migrateData() {
-    alert("Starting Migration...");
-    const { error } = await supabase.from('movies').insert(SEED_DATA);
-    if (error) { alert("Migration failed: " + error.message); }
-    else { alert("Success! Refresh and change back to init();"); }
+    alert('Migrating...');
+    const { error } = await sb.from('movies').insert(SEED_DATA);
+    if (error) { alert('Fail: ' + error.message); }
+    else { alert('Success!'); init(); }
 }
 
-// THE FINAL LINE:
+let aList = 'All', srch = '';
 migrateData();
 </script>
 </body>
