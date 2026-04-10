@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Watchlist</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         *{box-sizing:border-box;margin:0;padding:0}
         body{background:#0d0d0d;color:#e8e0d0;font-family:Georgia,serif;max-width:640px;margin:0 auto;min-height:100vh}
@@ -50,14 +51,14 @@
         .btnw.unseen{background:#c9a84c;color:#0d0d0d}
         .btnw.seen{background:#242424;color:#777}
         .addmod{background:#161616;width:100%;max-width:560px;margin:0 auto;border-radius:18px 18px 0 0;padding:20px 18px 36px}
-        .inp{width:100%;background:#1e1e1e;color:#e8e0d0;border:1px solid #333;border-radius:8px;padding:11px 13px;margin-top:5px;font-family:Georgia,serif}
+        .inp{width:100%;background:#1e1e1e;color:#e8e0d0;border:1px solid #333;border-radius:8px;padding:11px 13px;margin-top:5px;font-family:Georgia,serif;display:block;width:100%}
         .btnadd{margin-top:22px;width:100%;padding:14px;background:#c9a84c;color:#0d0d0d;border:none;border-radius:10px;font-weight:bold;cursor:pointer}
     </style>
 </head>
 <body>
 <div class="hdr">
     <div class="hdr-row">
-        <div><h1>The Watchlist</h1><div class="sub" id="sub">Loading...</div></div>
+        <div><h1>The Watchlist</h1><div class="sub" id="sub">Connecting...</div></div>
         <button class="btn-add" onclick="openAdd()">+ Add Film</button>
     </div>
     <div class="tabs">
@@ -79,7 +80,7 @@
 
 <div class="ov" id="aov" onclick="closeAdd()">
     <div class="addmod" onclick="event.stopPropagation()">
-        <h2>Add a Film</h2>
+        <h2 style="color:#f5e6c8; margin-bottom:15px">Add a Film</h2>
         <input class="inp" id="ati" placeholder="Title">
         <input class="inp" id="ayi" placeholder="Year" type="number">
         <select class="inp" id="ali"><option value="Family">Family</option><option value="Solo">Solo</option></select>
@@ -88,144 +89,111 @@
 </div>
 
 <script>
-const TOKEN='eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyODAzZDBjMjU0MmM3OTJhZmZlYjQwNDZmODExOGM3YyIsIm5iZiI6MTc3NTYwNzk0Ny4wNTksInN1YiI6IjY5ZDVhMDhiYTg0NThlY2FlM2VkZjkyNiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.nPaW_tN4VyBm5ryaB7S9RjAvGg9f3JnZi859AbiYE84';
-const TIMG='https://image.tmdb.org/t/p/w300';
+// --- SUPABASE CONFIG ---
+const SUPABASE_URL = 'https://omcxkfjupbpelnepvvch.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tY3hrZmp1cGJwZWxuZXB2dmNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MDU1OTgsImV4cCI6MjA5MTI4MTU5OH0.XEUuG4wWeSyQFEHykf8aPg61ialT6bQaWxIfwJ8znP8';
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Updated SAVE_KEY to force a full data refresh
-const SAVE_KEY = 'watchlist_v6_final_fix';
+const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyODAzZDBjMjU0MmM3OTJhZmZlYjQwNDZmODExOGM3YyIsIm5iZiI6MTc3NTYwNzk0Ny4wNTksInN1YiI6IjY5ZDVhMDhiYTg0NThlY2FlM2VkZjkyNiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.nPaW_tN4VyBm5ryaB7S9RjAvGg9f3JnZi859AbiYE84';
+const TIMG = 'https://image.tmdb.org/t/p/w300';
 
 const SEED_DATA = [
-    {id: 1, list: "Family", watched: true, title: "Jurassic Park", year: 1993, genre: ["Adventure", "Sci-Fi"], c1: "#1a4a2e", c2: "#2d7a4f", desc: "A theme park cloned dinosaurs run amok."},
-    {id: 2, list: "Family", watched: false, title: "The Fugitive", year: 1993, genre: ["Action", "Thriller"], c1: "#1a2a4a", c2: "#2d4a7a", desc: "A doctor hunts his wife's killer while pursued by a Marshal."},
-    {id: 3, list: "Family", watched: false, title: "The Rock", year: 1996, genre: ["Action", "Thriller"], c1: "#4a1a1a", c2: "#7a2d2d", desc: "Stopping a rogue general from launching chemical weapons from Alcatraz."},
-    {id: 4, list: "Family", watched: false, title: "The Shawshank Redemption", year: 1994, genre: ["Drama"], c1: "#2a2a1a", c2: "#4a4a2d", desc: "A wrongly imprisoned banker engineers the ultimate escape."},
-    {id: 5, list: "Family", watched: false, title: "The Mandalorian and Grogu", year: 2026, genre: ["Sci-Fi", "Adventure"], c1: "#1a3a4a", c2: "#2d5a6a", desc: "The bounty hunter and his Force-sensitive foundling take their story to the big screen."},
-    {id: 6, list: "Family", watched: false, title: "Spider-Man: Brand New Day", year: 2026, genre: ["Action", "Superhero"], c1: "#1a1a4a", c2: "#2d2d7a", desc: "Peter Parker begins a fresh chapter in a changed Marvel universe."},
-    {id: 7, list: "Family", watched: false, title: "Avengers: Secret Wars", year: 2027, genre: ["Action", "Superhero"], c1: "#2a1a4a", c2: "#4a2d7a", desc: "Heroes from across realities unite against collapse."},
-    {id: 8, list: "Family", watched: false, title: "Supergirl: Woman of Tomorrow", year: 2026, genre: ["Action", "Superhero"], c1: "#1a2a4a", c2: "#2d4a7a", desc: "Kara Zor-El embarks on a cosmic odyssey."},
-    {id: 9, list: "Family", watched: false, title: "Austin Powers: International Man of Mystery", year: 1997, genre: ["Comedy"], c1: "#4a3a1a", c2: "#7a5a2d", desc: "A swinging 60s spy is thawed out in the 90s."},
-    {id: 10, list: "Family", watched: false, title: "The Lord of the Rings: Fellowship of the Ring", year: 2001, genre: ["Fantasy", "Adventure"], c1: "#2a3a1a", c2: "#3a5a2d", desc: "A fellowship embarks on an epic quest to destroy the One Ring."},
-    {id: 11, list: "Family", watched: false, title: "Anchorman: The Legend of Ron Burgundy", year: 2004, genre: ["Comedy"], c1: "#4a2a1a", c2: "#7a3a2d", desc: "A 1970s TV anchor world is upended by a talented woman."},
-    {id: 12, list: "Family", watched: false, title: "O Brother, Where Art Thou?", year: 2000, genre: ["Comedy", "Adventure"], c1: "#3a3a1a", c2: "#5a5a2d", desc: "Three escapees blunder through the Depression-era South."},
-    {id: 13, list: "Family", watched: false, title: "Best in Show", year: 2000, genre: ["Comedy"], c1: "#1a3a3a", c2: "#2d5a5a", desc: "A mockumentary following neurotic owners at a dog show."},
-    {id: 14, list: "Family", watched: false, title: "Punch-Drunk Love", year: 2002, genre: ["Comedy", "Drama"], c1: "#1a1a4a", c2: "#2d2d6a", desc: "A lonely business owner finds unexpected love."},
-    {id: 15, list: "Family", watched: false, title: "Up", year: 2009, genre: ["Animation", "Adventure"], c1: "#1a2a4a", c2: "#2d4a7a", desc: "A widower flies his house to South America via balloons."},
-    {id: 16, list: "Family", watched: false, title: "Moneyball", year: 2011, genre: ["Drama", "Sport"], c1: "#1a3a1a", c2: "#2d5a2d", desc: "Billy Beane uses data analysis to build a winning team."},
-    {id: 17, list: "Family", watched: false, title: "Amelie", year: 2001, genre: ["Comedy", "Romance"], c1: "#3a1a2a", c2: "#6a2d4a", desc: "A whimsical Parisian waitress orchestrates happiness for others."},
-    {id: 18, list: "Family", watched: false, title: "WALL·E", year: 2008, genre: ["Animation", "Sci-Fi"], c1: "#3a2a1a", c2: "#5a4a2d", desc: "A waste-collecting robot sparks humanity's return home."},
-    {id: 19, list: "Family", watched: false, title: "The Dark Knight", year: 2008, genre: ["Action", "Drama"], c1: "#1a1a1a", c2: "#2d2d2d", desc: "Batman faces the anarchic Joker in a battle for Gotham."},
-    {id: 20, list: "Family", watched: false, title: "Crouching Tiger, Hidden Dragon", year: 2000, genre: ["Action", "Drama"], c1: "#1a3a2a", c2: "#2d5a3a", desc: "A stolen sword draws two women into an epic conflict."},
-    {id: 21, list: "Family", watched: false, title: "Spirited Away", year: 2001, genre: ["Animation", "Fantasy"], c1: "#2a1a3a", c2: "#4a2d5a", desc: "A girl trapped in a spirit world must work in a bathhouse."},
-    {id: 22, list: "Solo", watched: false, title: "Interstellar", year: 2014, genre: ["Sci-Fi", "Drama"], c1: "#0a0a1a", c2: "#1a1a3a", desc: "A pilot leads a mission through a wormhole to save humanity."},
-    {id: 23, list: "Solo", watched: false, title: "One Battle After Another", year: 2025, genre: ["War", "Drama"], c1: "#2a2a1a", c2: "#3a3a2d", desc: "A sweeping WWII epic adapted from the Pulitzer winning novel."},
-    {id: 24, list: "Solo", watched: false, title: "Sinners", year: 2025, genre: ["Horror", "Drama"], c1: "#1a0a0a", c2: "#3a1a1a", desc: "Twin brothers return to the Jim Crow South and face something sinister."},
-    {id: 25, list: "Solo", watched: false, title: "The Life of Chuck", year: 2025, genre: ["Drama", "Fantasy"], c1: "#1a2a3a", c2: "#2d3a4a", desc: "A man's extraordinary life is revealed as the world ends."},
-    {id: 26, list: "Solo", watched: false, title: "Vision Quest", year: 1985, genre: ["Drama", "Sport"], c1: "#1a2a1a", c2: "#2d3a2d", desc: "A driven high school wrestler targets the state's best competitor."},
-    {id: 27, list: "Solo", watched: false, title: "The Secret Life of Walter Mitty", year: 2013, genre: ["Adventure", "Comedy"], c1: "#1a3a4a", c2: "#2d4a5a", desc: "A daydreamer embarks on a real global adventure."},
-    {id: 28, list: "Solo", watched: false, title: "Superbad", year: 2007, genre: ["Comedy"], c1: "#2a1a1a", c2: "#4a2d2d", desc: "Two best friends navigate chaos trying to score alcohol for a party."},
-    {id: 29, list: "Solo", watched: false, title: "Memories of Murder", year: 2003, genre: ["Crime", "Drama"], c1: "#1a1a2a", c2: "#2d2d3a", desc: "Detectives clash as a serial killer eludes them in South Korea."},
-    {id: 30, list: "Solo", watched: false, title: "Inside Llewyn Davis", year: 2013, genre: ["Drama", "Music"], c1: "#2a2a1a", c2: "#3a3a2d", desc: "A folk singer struggles through a brutal week in the 1960s."},
-    {id: 31, list: "Solo", watched: false, title: "The Act of Killing", year: 2012, genre: ["Documentary"], c1: "#2a1a2a", c2: "#3a2d3a", desc: "Death squad leaders reenact their crimes on film."},
-    {id: 32, list: "Solo", watched: false, title: "Spotlight", year: 2015, genre: ["Drama", "Thriller"], c1: "#1a2a2a", c2: "#2d3a3a", desc: "The Boston Globe exposes a systematic cover-up in the Church."},
-    {id: 33, list: "Solo", watched: false, title: "Oppenheimer", year: 2023, genre: ["Drama", "History"], c1: "#1a1a0a", c2: "#2d2d1a", desc: "J. Robert Oppenheimer's race to build the atomic bomb."},
-    {id: 34, list: "Solo", watched: false, title: "Little Miss Sunshine", year: 2006, genre: ["Comedy", "Drama"], c1: "#3a2a1a", c2: "#5a3a2d", desc: "A dysfunctional family drives to a beauty pageant."},
-    {id: 35, list: "Solo", watched: false, title: "Memento", year: 2000, genre: ["Mystery", "Thriller"], c1: "#1a1a2a", c2: "#2a2a3a", desc: "A man with no short-term memory hunts his wife's killer."},
-    {id: 36, list: "Solo", watched: false, title: "Whiplash", year: 2014, genre: ["Drama", "Music"], c1: "#2a1a1a", c2: "#3a2d2d", desc: "A jazz drummer endures a tyrannical instructor."},
-    {id: 37, list: "Solo", watched: false, title: "Uncut Gems", year: 2019, genre: ["Crime", "Drama"], c1: "#1a2a1a", c2: "#2d3a2d", desc: "A reckless jeweler juggles debts and an NBA star."},
-    {id: 38, list: "Solo", watched: false, title: "Borat", year: 2006, genre: ["Comedy"], c1: "#3a3a1a", c2: "#5a5a2d", desc: "A Kazakh reporter travels America making a documentary."},
-    {id: 39, list: "Solo", watched: false, title: "12 Years a Slave", year: 2013, genre: ["Drama", "History"], c1: "#2a1a1a", c2: "#3a2a2a", desc: "A free Black man is kidnapped into slavery in the South."},
-    {id: 40, list: "Solo", watched: false, title: "A Serious Man", year: 2009, genre: ["Comedy", "Drama"], c1: "#2a2a2a", c2: "#3a3a3a", desc: "A physics professor watches his life unravel."},
-    {id: 41, list: "Solo", watched: false, title: "Bridesmaids", year: 2011, genre: ["Comedy"], c1: "#3a1a3a", c2: "#5a2d5a", desc: "A maid of honor competes with a wealthy bridesmaid."},
-    {id: 42, list: "Solo", watched: false, title: "The Wolf of Wall Street", year: 2013, genre: ["Comedy", "Drama"], c1: "#2a2a1a", c2: "#4a4a2d", desc: "The rise and collapse of stockbroker Jordan Belfort."},
-    {id: 43, list: "Solo", watched: false, title: "Get Out", year: 2017, genre: ["Horror", "Thriller"], c1: "#0a1a0a", c2: "#1a2d1a", desc: "A man visits his girlfriend's family and discovers a secret."},
-    {id: 44, list: "Solo", watched: false, title: "Parasite", year: 2019, genre: ["Drama", "Thriller"], c1: "#1a1a1a", c2: "#2d2d2d", desc: "A destitute family schemes into a wealthy household."},
-    {id: 45, list: "Solo", watched: false, title: "Sky King", year: 2024, genre: ["Drama"], c1: "#1a2a3a", c2: "#2d3a4a", desc: "Details to be confirmed."}
+    {list: "Family", watched: true, title: "Jurassic Park", year: 1993, genre: ["Adventure", "Sci-Fi"], c1: "#1a4a2e", c2: "#2d7a4f", desc: "A theme park cloned dinosaurs run amok."},
+    {list: "Family", watched: false, title: "The Fugitive", year: 1993, genre: ["Action", "Thriller"], c1: "#1a2a4a", c2: "#2d4a7a", desc: "A doctor hunts his wife's killer while pursued by a Marshal."},
+    {list: "Family", watched: false, title: "The Rock", year: 1996, genre: ["Action", "Thriller"], c1: "#4a1a1a", c2: "#7a2d2d", desc: "Stopping a rogue general from launching chemical weapons from Alcatraz."},
+    {list: "Family", watched: false, title: "The Shawshank Redemption", year: 1994, genre: ["Drama"], c1: "#2a2a1a", c2: "#4a4a2d", desc: "A wrongly imprisoned banker engineers the ultimate escape."},
+    {list: "Family", watched: false, title: "The Mandalorian and Grogu", year: 2026, genre: ["Sci-Fi", "Adventure"], c1: "#1a3a4a", c2: "#2d5a6a", desc: "The bounty hunter and his Force-sensitive foundling take their story to the big screen."},
+    {list: "Family", watched: false, title: "Spider-Man: Brand New Day", year: 2026, genre: ["Action", "Superhero"], c1: "#1a1a4a", c2: "#2d2d7a", desc: "Peter Parker begins a fresh chapter in a changed Marvel universe."},
+    {list: "Family", watched: false, title: "Avengers: Secret Wars", year: 2027, genre: ["Action", "Superhero"], c1: "#2a1a4a", c2: "#4a2d7a", desc: "Heroes from across realities unite against collapse."},
+    {list: "Family", watched: false, title: "Supergirl: Woman of Tomorrow", year: 2026, genre: ["Action", "Superhero"], c1: "#1a2a4a", c2: "#2d4a7a", desc: "Kara Zor-El embarks on a cosmic odyssey."},
+    {list: "Family", watched: false, title: "Austin Powers: International Man of Mystery", year: 1997, genre: ["Comedy"], c1: "#4a3a1a", c2: "#7a5a2d", desc: "A swinging 60s spy is thawed out in the 90s."},
+    {list: "Family", watched: false, title: "The Lord of the Rings: Fellowship of the Ring", year: 2001, genre: ["Fantasy", "Adventure"], c1: "#2a3a1a", c2: "#3a5a2d", desc: "A fellowship embarks on an epic quest to destroy the One Ring."},
+    {list: "Family", watched: false, title: "Anchorman: The Legend of Ron Burgundy", year: 2004, genre: ["Comedy"], c1: "#4a2a1a", c2: "#7a3a2d", desc: "A 1970s TV anchor world is upended by a talented woman."},
+    {list: "Family", watched: false, title: "O Brother, Where Art Thou?", year: 2000, genre: ["Comedy", "Adventure"], c1: "#3a3a1a", c2: "#5a5a2d", desc: "Three escapees blunder through the Depression-era South."},
+    {list: "Family", watched: false, title: "Best in Show", year: 2000, genre: ["Comedy"], c1: "#1a3a3a", c2: "#2d5a5a", desc: "A mockumentary following neurotic owners at a dog show."},
+    {list: "Family", watched: false, title: "Punch-Drunk Love", year: 2002, genre: ["Comedy", "Drama"], c1: "#1a1a4a", c2: "#2d2d6a", desc: "A lonely business owner finds unexpected love."},
+    {list: "Family", watched: false, title: "Up", year: 2009, genre: ["Animation", "Adventure"], c1: "#1a2a4a", c2: "#2d4a7a", desc: "A widower flies his house to South America via balloons."},
+    {list: "Family", watched: false, title: "Moneyball", year: 2011, genre: ["Drama", "Sport"], c1: "#1a3a1a", c2: "#2d5a2d", desc: "Billy Beane uses data analysis to build a winning team."},
+    {list: "Family", watched: false, title: "Amelie", year: 2001, genre: ["Comedy", "Romance"], c1: "#3a1a2a", c2: "#6a2d4a", desc: "A whimsical Parisian waitress orchestrates happiness for others."},
+    {list: "Family", watched: false, title: "WALL·E", year: 2008, genre: ["Animation", "Sci-Fi"], c1: "#3a2a1a", c2: "#5a4a2d", desc: "A waste-collecting robot sparks humanity's return home."},
+    {list: "Family", watched: false, title: "The Dark Knight", year: 2008, genre: ["Action", "Drama"], c1: "#1a1a1a", c2: "#2d2d2d", desc: "Batman faces the anarchic Joker in a battle for Gotham."},
+    {list: "Family", watched: false, title: "Crouching Tiger, Hidden Dragon", year: 2000, genre: ["Action", "Drama"], c1: "#1a3a2a", c2: "#2d5a3a", desc: "A stolen sword draws two women into an epic conflict."},
+    {list: "Family", watched: false, title: "Spirited Away", year: 2001, genre: ["Animation", "Fantasy"], c1: "#2a1a3a", c2: "#4a2d5a", desc: "A girl trapped in a spirit world must work in a bathhouse."},
+    {list: "Solo", watched: false, title: "Interstellar", year: 2014, genre: ["Sci-Fi", "Drama"], c1: "#0a0a1a", c2: "#1a1a3a", desc: "A pilot leads a mission through a wormhole to save humanity."},
+    {list: "Solo", watched: false, title: "One Battle After Another", year: 2025, genre: ["War", "Drama"], c1: "#2a2a1a", c2: "#3a3a2d", desc: "A sweeping WWII epic adapted from the Pulitzer winning novel."},
+    {list: "Solo", watched: false, title: "Sinners", year: 2025, genre: ["Horror", "Drama"], c1: "#1a0a0a", c2: "#3a1a1a", desc: "Twin brothers return to the Jim Crow South and face something sinister."},
+    {list: "Solo", watched: false, title: "The Life of Chuck", year: 2025, genre: ["Drama", "Fantasy"], c1: "#1a2a3a", c2: "#2d3a4a", desc: "A man's extraordinary life is revealed as the world ends."},
+    {list: "Solo", watched: false, title: "Vision Quest", year: 1985, genre: ["Drama", "Sport"], c1: "#1a2a1a", c2: "#2d3a2d", desc: "A driven high school wrestler targets the state's best competitor."},
+    {list: "Solo", watched: false, title: "The Secret Life of Walter Mitty", year: 2013, genre: ["Adventure", "Comedy"], c1: "#1a3a4a", c2: "#2d4a5a", desc: "A daydreamer embarks on a real global adventure."},
+    {list: "Solo", watched: false, title: "Superbad", year: 2007, genre: ["Comedy"], c1: "#2a1a1a", c2: "#4a2d2d", desc: "Two best friends navigate chaos trying to score alcohol for a party."},
+    {list: "Solo", watched: false, title: "Memories of Murder", year: 2003, genre: ["Crime", "Drama"], c1: "#1a1a2a", c2: "#2d2d3a", desc: "Detectives clash as a serial killer eludes them in South Korea."},
+    {list: "Solo", watched: false, title: "Inside Llewyn Davis", year: 2013, genre: ["Drama", "Music"], c1: "#2a2a1a", c2: "#3a3a2d", desc: "A folk singer struggles through a brutal week in the 1960s."},
+    {list: "Solo", watched: false, title: "The Act of Killing", year: 2012, genre: ["Documentary"], c1: "#2a1a2a", c2: "#3a2d3a", desc: "Death squad leaders reenact their crimes on film."},
+    {list: "Solo", watched: false, title: "Spotlight", year: 2015, genre: ["Drama", "Thriller"], c1: "#1a2a2a", c2: "#2d3a3a", desc: "The Boston Globe exposes a systematic cover-up in the Church."},
+    {list: "Solo", watched: false, title: "Oppenheimer", year: 2023, genre: ["Drama", "History"], c1: "#1a1a0a", c2: "#2d2d1a", desc: "J. Robert Oppenheimer's race to build the atomic bomb."},
+    {list: "Solo", watched: false, title: "Little Miss Sunshine", year: 2006, genre: ["Comedy", "Drama"], c1: "#3a2a1a", c2: "#5a3a2d", desc: "A dysfunctional family drives to a beauty pageant."},
+    {list: "Solo", watched: false, title: "Memento", year: 2000, genre: ["Mystery", "Thriller"], c1: "#1a1a2a", c2: "#2a2a3a", desc: "A man with no short-term memory hunts his wife's killer."},
+    {list: "Solo", watched: false, title: "Whiplash", year: 2014, genre: ["Drama", "Music"], c1: "#2a1a1a", c2: "#3a2d2d", desc: "A jazz drummer endures a tyrannical instructor."},
+    {list: "Solo", watched: false, title: "Uncut Gems", year: 2019, genre: ["Crime", "Drama"], c1: "#1a2a1a", c2: "#2d3a2d", desc: "A reckless jeweler juggles debts and an NBA star."},
+    {list: "Solo", watched: false, title: "Borat", year: 2006, genre: ["Comedy"], c1: "#3a3a1a", c2: "#5a5a2d", desc: "A Kazakh reporter travels America making a documentary."},
+    {list: "Solo", watched: false, title: "12 Years a Slave", year: 2013, genre: ["Drama", "History"], c1: "#2a1a1a", c2: "#3a2a2a", desc: "A free Black man is kidnapped into slavery in the South."},
+    {list: "Solo", watched: false, title: "A Serious Man", year: 2009, genre: ["Comedy", "Drama"], c1: "#2a2a2a", c2: "#3a3a3a", desc: "A physics professor watches his life unravel."},
+    {list: "Solo", watched: false, title: "Bridesmaids", year: 2011, genre: ["Comedy"], c1: "#3a1a3a", c2: "#5a2d5a", desc: "A maid of honor competes with a wealthy bridesmaid."},
+    {list: "Solo", watched: false, title: "The Wolf of Wall Street", year: 2013, genre: ["Comedy", "Drama"], c1: "#2a2a1a", c2: "#4a4a2d", desc: "The rise and collapse of stockbroker Jordan Belfort."},
+    {list: "Solo", watched: false, title: "Get Out", year: 2017, genre: ["Horror", "Thriller"], c1: "#0a1a0a", c2: "#1a2d1a", desc: "A man visits his girlfriend's family and discovers a secret."},
+    {list: "Solo", watched: false, title: "Parasite", year: 2019, genre: ["Drama", "Thriller"], c1: "#1a1a1a", c2: "#2d2d2d", desc: "A destitute family schemes into a wealthy household."},
+    {list: "Solo", watched: false, title: "Sky King", year: 2024, genre: ["Drama"], c1: "#1a2a3a", c2: "#2d3a4a", desc: "Details to be confirmed."}
 ];
 
 let movies = [];
 const pc = {}; 
 
-function init() {
-    const saved = localStorage.getItem(SAVE_KEY);
-    if (saved) {
-        try {
-            const savedMovies = JSON.parse(saved);
-            // Create a Map of saved movies by ID for quick lookup
-            const savedMap = new Map(savedMovies.map(m => [m.id, m]));
-            
-            // Merge: Keep everything from SEED_DATA (with saved 'watched' states)
-            // and append any custom movies that aren't in the SEED_DATA.
-            const seedIds = new Set(SEED_DATA.map(m => m.id));
-            
-            movies = SEED_DATA.map(seedMovie => {
-                const userVersion = savedMap.get(seedMovie.id);
-                return userVersion ? { ...seedMovie, watched: userVersion.watched, list: userVersion.list } : seedMovie;
-            });
-
-            // Add back custom movies (those not found in the original SEED_DATA)
-            const customMovies = savedMovies.filter(m => !seedIds.has(m.id));
-            movies = [...movies, ...customMovies];
-
-        } catch(e) { 
-            console.error("Storage load failed, reverting to seed", e);
-            movies = [...SEED_DATA]; 
-        }
-    } else {
+async function init() {
+    const { data, error } = await supabase.from('movies').select('*').order('title');
+    if (error) {
+        console.error("Cloud fetch failed:", error);
         movies = [...SEED_DATA];
+    } else {
+        movies = data.length ? data : [];
     }
     render();
 }
 
-function save() { localStorage.setItem(SAVE_KEY, JSON.stringify(movies)); }
-
 async function fetchPoster(title, year) {
     const cacheKey = `${title}|${year}`;
     if (pc[cacheKey]) return pc[cacheKey];
-
     try {
         const q = encodeURIComponent(title);
         const r = await fetch(`https://api.themoviedb.org/3/search/movie?query=${q}&year=${year}`, {
-            headers: { 
-                'Authorization': `Bearer ${TOKEN}`, 
-                'accept': 'application/json' 
-            }
+            headers: { 'Authorization': `Bearer ${TMDB_TOKEN}`, 'accept': 'application/json' }
         });
-        
         const d = await r.json();
         const results = d.results || [];
-
-        // STRONGER MATCHING LOGIC:
-        // Strip hyphens, dots, and spaces to find a match regardless of punctuation
         const clean = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
         const target = clean(title);
-
-        const match = results.find(res => clean(res.title) === target && res.poster_path) 
-                    || results.find(res => res.poster_path);
-
+        const match = results.find(res => clean(res.title) === target && res.poster_path) || results.find(res => res.poster_path);
         if (match) {
             pc[cacheKey] = TIMG + match.poster_path;
             return pc[cacheKey];
         }
-    } catch(e) { console.error("Poster fetch error for:", title, e); }
+    } catch(e) {}
     return null;
 }
 
 function svgPlaceholder(m) {
-    return `<svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
-        <rect width="200" height="300" fill="${m.c1}"/>
-        <text x="100" y="150" text-anchor="middle" fill="white" font-size="12" font-family="serif">${m.title}</text>
-    </svg>`;
+    return `<svg viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="300" fill="${m.c1 || '#333'}"/><text x="100" y="150" text-anchor="middle" fill="white" font-size="12" font-family="serif">${m.title}</text></svg>`;
 }
 
 function render() {
     const grid = document.getElementById('grid');
-    const filt = movies.filter(m => (aList === 'All' || m.list === aList) && 
-        (!srch || m.title.toLowerCase().includes(srch.toLowerCase())));
+    const filt = movies.filter(m => (aList === 'All' || m.list === aList) && (!srch || m.title.toLowerCase().includes(srch.toLowerCase())));
 
     document.getElementById('cAll').textContent = movies.length;
     document.getElementById('cFamily').textContent = movies.filter(m => m.list === 'Family').length;
     document.getElementById('cSolo').textContent = movies.filter(m => m.list === 'Solo').length;
     document.getElementById('sub').textContent = `${movies.filter(m=>m.watched).length} WATCHED`;
+
+    if(!movies.length) { grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px; color:#555">List is empty. Run migrateData() in console.</div>'; return; }
 
     grid.innerHTML = filt.map(m => `
         <div class="card ${m.watched ? 'dim' : ''}" onclick="openDet(${m.id})">
@@ -257,23 +225,37 @@ function openDet(id) {
     document.getElementById('mhero').innerHTML = `<div class="mgrad"></div><button class="mclose" onclick="closeDet()">✕</button><img id="mh${m.id}" style="width:100%; height:100%; object-fit:cover; display:block">`;
     document.getElementById('mbody').innerHTML = `<h2 class="mtitle">${m.title} (${m.year || 'TBD'})</h2><p class="mdesc">${m.desc}</p>
         <button class="btnw ${m.watched ? 'seen' : 'unseen'}" onclick="togW(${m.id})">${m.watched ? 'Mark Unwatched' : 'Mark Watched'}</button>`;
-    
     fetchPoster(m.title, m.year).then(url => { if(url) document.getElementById(`mh${m.id}`).src = url; });
     document.getElementById('dov').style.display = 'flex';
 }
 
 function closeDet() { document.getElementById('dov').style.display = 'none'; }
-function togW(id) { movies = movies.map(m => m.id === id ? {...m, watched: !m.watched} : m); save(); closeDet(); render(); }
+
+async function togW(id) {
+    const m = movies.find(x => x.id === id);
+    const { error } = await supabase.from('movies').update({ watched: !m.watched }).eq('id', id);
+    if (!error) { movies = movies.map(x => x.id === id ? {...x, watched: !x.watched} : x); render(); closeDet(); }
+}
+
 function openAdd() { document.getElementById('aov').style.display = 'flex'; }
 function closeAdd() { document.getElementById('aov').style.display = 'none'; }
 
-function submitAdd() {
-    const t = document.getElementById('ati').value;
+async function submitAdd() {
+    const t = document.getElementById('ati').value.trim();
     const y = document.getElementById('ayi').value;
     const l = document.getElementById('ali').value;
     if(!t) return;
-    movies.push({id: Date.now(), title: t, year: y, list: l, watched: false, c1: '#333', c2: '#444', desc: "Added manually."});
-    save(); closeAdd(); render();
+    const newMovie = { title: t, year: y ? parseInt(y) : null, list: l, watched: false, desc: "Added manually.", c1: '#333', c2: '#444', genre: ['Drama'] };
+    const { data, error } = await supabase.from('movies').insert([newMovie]).select();
+    if (!error) { movies.push(data[0]); render(); closeAdd(); }
+}
+
+// ONE-TIME MIGRATION SCRIPT
+async function migrateData() {
+    console.log("Starting cloud migration...");
+    const { error } = await supabase.from('movies').insert(SEED_DATA);
+    if (error) { console.error("Migration failed:", error); alert("Error: " + error.message); }
+    else { console.log("Success!"); alert("Migration Successful!"); init(); }
 }
 
 init();
