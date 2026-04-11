@@ -89,13 +89,11 @@
 </div>
 
 <script>
-window.onerror = function(m, u, l) { alert('ERROR: ' + m + ' on line ' + l); };
+window.onerror = function(m, u, l) { alert('CRITICAL ERROR: ' + m + ' on line ' + l); };
 
 const SUPABASE_URL = 'https://omcxkfjupbpelnepvvch.supabase.co';
-// PASTE THE 'watchlist1' KEY FROM YOUR SCREENSHOT HERE:
-const SUPABASE_KEY = 'sb_publishable__y_hIOsIHu-Z7CVYpk0ueQ_c0hstZvv'; 
+const SUPABASE_KEY = 'PASTE_YOUR_WATCHLIST1_KEY_HERE'; 
 
-// Renamed to 'sb' to avoid crash
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyODAzZDBjMjU0MmM3OTJhZmZlYjQwNDZmODExOGM3YyIsIm5iZiI6MTc3NTYwNzk0Ny4wNTksInN1YiI6IjY5ZDVhMDhiYTg0NThlY2FlM2VkZjkyNiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.nPaW_tN4VyBm5ryaB7S9RjAvGg9f3JnZi859AbiYE84';
@@ -144,7 +142,7 @@ const SEED_DATA = [
     {list: "Solo", watched: false, title: "A Serious Man", year: 2009, genre: ["Comedy", "Drama"], c1: "#2a2a2a", c2: "#3a3a3a", desc: "A physics professor watches his life unravel."},
     {list: "Solo", watched: false, title: "Bridesmaids", year: 2011, genre: ["Comedy"], c1: "#3a1a3a", c2: "#5a2d5a", desc: "A maid of honor competes with a wealthy bridesmaid."},
     {list: "Solo", watched: false, title: "The Wolf of Wall Street", year: 2013, genre: ["Comedy", "Drama"], c1: "#2a2a1a", c2: "#4a4a2d", desc: "The rise and collapse of stockbroker Jordan Belfort."},
-    {list: "Solo", watched: false, title: "Get Out", year: 2017, genre: ["Horror", "Thriller"], c1: "#0a1a0a", c2: "#1a2d1a", desc: "A man visits his girlfriend's family and discovers a secret."},
+    {list: "Solo", watched: false, title: "Get Out", year: 2017, genre: ["Horror", "Thriller"], c1: "#0a1a0a", r2: "#1a2d1a", desc: "A man visits his girlfriend's family and discovers a secret."},
     {list: "Solo", watched: false, title: "Parasite", year: 2019, genre: ["Drama", "Thriller"], c1: "#1a1a1a", c2: "#2d2d2d", desc: "A destitute family schemes into a wealthy household."},
     {list: "Solo", watched: false, title: "Sky King", year: 2024, genre: ["Drama"], c1: "#1a2a3a", c2: "#2d3a4a", desc: "Details to be confirmed."}
 ];
@@ -153,10 +151,13 @@ let movies = [];
 const pc = {}; 
 
 async function init() {
-    document.getElementById('sub').textContent = 'Connecting...';
+    document.getElementById('sub').textContent = 'Fetching Cloud Data...';
     const { data, error } = await sb.from('movies').select('*').order('title');
-    if (error) { alert('Fetch Error: ' + error.message); }
-    else { movies = data.length ? data : []; }
+    if (error) { 
+        alert('Fetch Error: ' + error.message); 
+    } else { 
+        movies = data.length ? data : []; 
+    }
     render();
 }
 
@@ -230,14 +231,17 @@ async function submitAdd() {
 }
 
 async function migrateData() {
-    alert('Migrating...');
+    alert('Migrating 45 movies...');
     const { error } = await sb.from('movies').insert(SEED_DATA);
-    if (error) { alert('Fail: ' + error.message); }
-    else { alert('Success!'); init(); }
+    if (error) { alert('Migration Fail: ' + error.message); }
+    else { alert('Migration Success! Change last line to init(); now.'); init(); }
 }
 
 let aList = 'All', srch = '';
-init();
+
+// --- THE FINAL SWAP ---
+// Change this to init(); once you get the 'Migration Success!' alert.
+migrateData();
 </script>
 </body>
 </html>
